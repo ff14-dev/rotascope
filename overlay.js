@@ -502,7 +502,7 @@ function startCountdown(seconds) {
     setStatus(`카운트다운: ${remainSec.toFixed(2)}초`, "info");
   };
   tick();
-  state.countdownTimerId = setInterval(tick, 250);
+  state.countdownTimerId = setInterval(tick, 50);
 }
 
 // ── 로그 이벤트 처리 ──────────────────────────────────────────────────────
@@ -557,9 +557,21 @@ function dispatchOverlayPayload(payload) {
 // onPlayerChangedEvent: e.detail.job (소문자 string, 예: "sam")
 // getCombatants:        combatants[0].Job (대문자 J, string, 예: "SAM")
 
+function normalizeJobAbbr(abbr) {
+  if (abbr === null || abbr === undefined) return null;
+  if (typeof abbr === "number") return FFXIV_JOB_BY_ID[abbr] || null;
+  const raw = String(abbr).trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) {
+    const mapped = FFXIV_JOB_BY_ID[Number(raw)];
+    if (mapped) return mapped;
+  }
+  return raw.toLowerCase();
+}
+
 async function applyDetectedJob(abbr) {
-  if (!abbr) return;
-  const lower = abbr.toLowerCase();
+  const lower = normalizeJobAbbr(abbr);
+  if (!lower) return;
   if (lower === state.job) return;
   state.job = lower;
   localStorage.setItem("rs_job", lower);
@@ -649,7 +661,6 @@ function setupOverlayPlugin() {
   }
 
   addOverlayListener("LogLine",              handleOverlayEvent);
-  addOverlayListener("ChatLog",              handleOverlayEvent);
   addOverlayListener("onLogEvent",           handleLegacyLogEvent);
   addOverlayListener("onPlayerChangedEvent", onPlayerChangedEvent);
 
