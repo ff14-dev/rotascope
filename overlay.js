@@ -41,7 +41,8 @@ const state = {
   currentTimelineIndex: 0,
   rotationCandidates: [],
   selectedRotationIndex: 0,
-  skillLogMax: 5,
+  timelineSlots: 7,
+  skillLogMax: 20,
   overlayWs: null,
 };
 
@@ -253,17 +254,15 @@ function shouldIgnoreAbility(name) {
 }
 
 // ── 타임라인 렌더링 ───────────────────────────────────────────────────────
-const WINDOW_BEFORE = 2;
-const WINDOW_AFTER  = 4;
-
 function renderTimelineWindow() {
   if (!els.timeline) return;
   els.timeline.innerHTML = "";
   if (state.timeline.length === 0) return;
 
   const anchor     = state.startTs ? state.currentTimelineIndex : 0;
-  const windowSize = WINDOW_BEFORE + WINDOW_AFTER + 1;
-  let start = Math.max(0, anchor - WINDOW_BEFORE);
+  const windowSize = Math.max(3, state.timelineSlots || 7);
+  const before = Math.floor((windowSize - 1) / 2);
+  let start = Math.max(0, anchor - before);
   let end   = Math.min(state.timeline.length, start + windowSize);
   start = Math.max(0, end - windowSize);
 
@@ -705,27 +704,24 @@ function initSettings() {
   }
   renderLogPicker();
 
-  const slotButtons = Array.from(document.querySelectorAll("[data-skill-slots]"));
+  const slotButtons = Array.from(document.querySelectorAll("[data-timeline-slots]"));
   const syncSlotButtons = () => {
     slotButtons.forEach((btn) => {
-      btn.classList.toggle("active", Number(btn.dataset.skillSlots) === state.skillLogMax);
+      btn.classList.toggle("active", Number(btn.dataset.timelineSlots) === state.timelineSlots);
     });
   };
-  const savedSkillSlots = Number(localStorage.getItem("rs_skill_slots") || "5");
-  state.skillLogMax = [3, 5, 7].includes(savedSkillSlots) ? savedSkillSlots : 5;
+  const savedTimelineSlots = Number(localStorage.getItem("rs_timeline_slots") || "7");
+  state.timelineSlots = [3, 5, 7].includes(savedTimelineSlots) ? savedTimelineSlots : 7;
   syncSlotButtons();
   slotButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const next = Number(btn.dataset.skillSlots);
-      if (![3, 5, 7].includes(next) || next === state.skillLogMax) return;
-      state.skillLogMax = next;
-      localStorage.setItem("rs_skill_slots", String(next));
-      if (state.skillLog.length > state.skillLogMax) {
-        state.skillLog = state.skillLog.slice(-state.skillLogMax);
-      }
+      const next = Number(btn.dataset.timelineSlots);
+      if (![3, 5, 7].includes(next) || next === state.timelineSlots) return;
+      state.timelineSlots = next;
+      localStorage.setItem("rs_timeline_slots", String(next));
       syncSlotButtons();
-      renderSkillLog();
-      setStatus(`스킬칸 표시 수: ${next}`, "info");
+      renderTimelineWindow();
+      setStatus(`타임라인 칸 수: ${next}`, "info");
     });
   });
 
