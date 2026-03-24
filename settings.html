@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>RotaScope 설정</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 14px;
+      padding: 20px;
+      min-width: 260px;
+    }
+    h1 {
+      font-size: 1rem;
+      color: #60a5fa;
+      margin-bottom: 18px;
+      letter-spacing: 0.05em;
+    }
+    .group {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 5px;
+    }
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      padding: 6px 10px;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #60a5fa;
+    }
+    select option { background: #0f172a; }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .row input { flex: 1; }
+    .unit {
+      font-size: 0.75rem;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+    .hint {
+      font-size: 0.7rem;
+      color: #475569;
+      margin-top: 3px;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 16px 0;
+    }
+    .saved-msg {
+      font-size: 0.72rem;
+      color: #4ade80;
+      margin-top: 12px;
+      min-height: 1em;
+      text-align: center;
+    }
+    #detected-job-display {
+      display: inline-block;
+      background: #1e293b;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      color: #4ade80;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚙ RotaScope 설정</h1>
+
+  <div class="group">
+    <label>보스</label>
+    <select id="s-encounter"></select>
+  </div>
+
+  <div class="group">
+    <label>현재 직업 (ACT 자동인식)</label>
+    <span id="detected-job-display">--</span>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="group">
+    <label>투명도</label>
+    <div class="row">
+      <input type="number" id="s-opacity" min="0" max="100" step="5" placeholder="65" />
+      <span class="unit">%</span>
+    </div>
+    <div class="hint">Enter 또는 포커스 해제 시 적용</div>
+  </div>
+
+  <div class="group">
+    <label>노드 너비 (X)</label>
+    <div class="row">
+      <input type="number" id="s-node-w" min="40" max="200" step="4" placeholder="72" />
+      <span class="unit">px</span>
+    </div>
+  </div>
+
+  <div class="group">
+    <label>노드 높이 (Y)</label>
+    <div class="row">
+      <input type="number" id="s-node-h" min="24" max="120" step="4" placeholder="48" />
+      <span class="unit">px</span>
+    </div>
+  </div>
+
+  <div class="saved-msg" id="saved-msg"></div>
+
+  <script>
+    const ENCOUNTER_LABELS = {
+      "m9s":    "M9S — Vamp Fatale",
+      "m10s":   "M10S — Red Hot & Deep Blue",
+      "m11s":   "M11S — The Tyrant",
+      "m12s-p1":"M12S — Lindwurm (Phase 1)",
+      "m12s-p2":"M12S — Lindwurm II (Phase 2)",
+    };
+
+    // ── 초기값 로드 ───────────────────────────────────────────
+    const enc     = document.getElementById("s-encounter");
+    const opacity = document.getElementById("s-opacity");
+    const nodeW   = document.getElementById("s-node-w");
+    const nodeH   = document.getElementById("s-node-h");
+    const jobEl   = document.getElementById("detected-job-display");
+    const savedEl = document.getElementById("saved-msg");
+
+    // 보스 옵션 생성
+    Object.entries(ENCOUNTER_LABELS).forEach(([key, label]) => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = label;
+      enc.appendChild(opt);
+    });
+
+    function load() {
+      enc.value     = localStorage.getItem("rs_encounter") || "m9s";
+      opacity.value = Math.round((parseFloat(localStorage.getItem("rs_opacity") ?? "0.65")) * 100);
+      nodeW.value   = parseInt(localStorage.getItem("rs_node_w") ?? "72", 10);
+      nodeH.value   = parseInt(localStorage.getItem("rs_node_h") ?? "48", 10);
+      jobEl.textContent = (localStorage.getItem("rs_job") || "--").toUpperCase();
+    }
+    load();
+
+    // localStorage 변화 감지 (오버레이에서 직업 변경 시 반영)
+    window.addEventListener("storage", () => {
+      jobEl.textContent = (localStorage.getItem("rs_job") || "--").toUpperCase();
+    });
+
+    // ── 저장 ─────────────────────────────────────────────────
+    let saveTimer;
+    function showSaved() {
+      savedEl.textContent = "✓ 저장됨";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { savedEl.textContent = ""; }, 1500);
+    }
+
+    function save() {
+      localStorage.setItem("rs_encounter", enc.value);
+      const op = Math.min(100, Math.max(0, Number(opacity.value) || 65)) / 100;
+      localStorage.setItem("rs_opacity", op.toFixed(2));
+      const w = Math.min(200, Math.max(40, Number(nodeW.value) || 72));
+      const h = Math.min(120, Math.max(24, Number(nodeH.value) || 48));
+      localStorage.setItem("rs_node_w", w);
+      localStorage.setItem("rs_node_h", h);
+      showSaved();
+    }
+
+    enc.addEventListener("change", save);
+
+    [opacity, nodeW, nodeH].forEach(el => {
+      el.addEventListener("keydown", e => { if (e.key === "Enter") { save(); el.blur(); } });
+      el.addEventListener("blur", save);
+    });
+  </script>
+</body>
+</html>
