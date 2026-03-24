@@ -84,7 +84,7 @@ function parseParams() {
     localStorage.getItem("rs_encounter") ||
     state.encounter
   ).toLowerCase();
-  state.job       = params.get("job") || localStorage.getItem("rs_job") || "sam";
+  state.job       = String(params.get("job") || localStorage.getItem("rs_job") || "sam").toLowerCase();
   state.dataBase  = (params.get("base") || "").replace(/\/$/, "");
   state.report    = params.get("report");
   state.fight     = params.has("fight") ? Number(params.get("fight")) : null;
