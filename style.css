@@ -62,8 +62,12 @@ body {
   background: rgba(37, 99, 235, 0.15);
 }
 
-/* ── 설정 패널 ── */
-#settings-panel {
+/* ── 화면 전환 ── */
+#main-view {
+  display: block;
+}
+
+#settings-view {
   display: none;
   width: 100%;
   background: rgba(8, 10, 18, 0.9);
@@ -72,13 +76,14 @@ body {
   padding: 12px 14px;
 }
 
-#app.settings-mode #settings-panel {
+#app.settings-mode #main-view {
+  display: none;
+}
+
+#app.settings-mode #settings-view {
   display: block;
 }
 
-#app.settings-mode #timeline-container,
-#app.settings-mode #skill-log-panel,
-#app.settings-mode #status-bar,
 #app.settings-mode #log-picker {
   display: none;
 }
