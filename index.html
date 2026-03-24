@@ -36,19 +36,28 @@
         <div class="sp-subtitle" id="player-label">대기 중...</div>
         <div class="sp-divider"></div>
         <div class="sp-row">
-          <label for="ctrl-opacity-num">투명도%</label>
-          <input id="ctrl-opacity-num" class="sp-input" type="number" min="10" max="100" step="5" />
-          <span class="sp-hint">Enter</span>
+          <label>투명도%</label>
+          <div class="sp-stepper">
+            <button id="ctrl-opacity-dec" type="button" class="sp-step-btn" aria-label="투명도 감소">-</button>
+            <span id="ctrl-opacity-val" class="sp-step-val">65%</span>
+            <button id="ctrl-opacity-inc" type="button" class="sp-step-btn" aria-label="투명도 증가">+</button>
+          </div>
         </div>
         <div class="sp-row">
-          <label for="ctrl-node-w-num">X</label>
-          <input id="ctrl-node-w-num" class="sp-input" type="number" min="52" max="140" step="4" />
-          <span class="sp-hint">Enter</span>
+          <label>X</label>
+          <div class="sp-stepper">
+            <button id="ctrl-node-w-dec" type="button" class="sp-step-btn" aria-label="X 감소">-</button>
+            <span id="ctrl-node-w-val" class="sp-step-val">72</span>
+            <button id="ctrl-node-w-inc" type="button" class="sp-step-btn" aria-label="X 증가">+</button>
+          </div>
         </div>
         <div class="sp-row">
-          <label for="ctrl-node-h-num">Y</label>
-          <input id="ctrl-node-h-num" class="sp-input" type="number" min="28" max="80" step="4" />
-          <span class="sp-hint">Enter</span>
+          <label>Y</label>
+          <div class="sp-stepper">
+            <button id="ctrl-node-h-dec" type="button" class="sp-step-btn" aria-label="Y 감소">-</button>
+            <span id="ctrl-node-h-val" class="sp-step-val">48</span>
+            <button id="ctrl-node-h-inc" type="button" class="sp-step-btn" aria-label="Y 증가">+</button>
+          </div>
         </div>
       </div>
 

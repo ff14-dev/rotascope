@@ -715,51 +715,86 @@ function initSettings() {
     nodeH:   parseInt(localStorage.getItem("rs_node_h")   ?? "48",  10),
   };
 
-  const opacityInput = document.getElementById("ctrl-opacity-num");
-  const nodeWInput   = document.getElementById("ctrl-node-w-num");
-  const nodeHInput   = document.getElementById("ctrl-node-h-num");
+  const opacityDecBtn = document.getElementById("ctrl-opacity-dec");
+  const opacityIncBtn = document.getElementById("ctrl-opacity-inc");
+  const opacityValEl  = document.getElementById("ctrl-opacity-val");
+  const nodeWDecBtn   = document.getElementById("ctrl-node-w-dec");
+  const nodeWIncBtn   = document.getElementById("ctrl-node-w-inc");
+  const nodeWValEl    = document.getElementById("ctrl-node-w-val");
+  const nodeHDecBtn   = document.getElementById("ctrl-node-h-dec");
+  const nodeHIncBtn   = document.getElementById("ctrl-node-h-inc");
+  const nodeHValEl    = document.getElementById("ctrl-node-h-val");
 
-  applyOpacity(saved.opacity);
-  applyNodeSize(saved.nodeW, saved.nodeH);
-  opacityInput.value = Math.round(saved.opacity * 100);
-  nodeWInput.value = saved.nodeW;
-  nodeHInput.value = saved.nodeH;
+  let opacityPct = Math.min(100, Math.max(10, Math.round(saved.opacity * 100)));
+  let nodeW = Math.min(140, Math.max(52, Math.round(saved.nodeW)));
+  let nodeH = Math.min(80, Math.max(28, Math.round(saved.nodeH)));
 
-  const applyOpacityInput = () => {
-    const v = Math.min(100, Math.max(10, Number(opacityInput.value) || 65)) / 100;
+  const renderControlValues = () => {
+    if (opacityValEl) opacityValEl.textContent = `${opacityPct}%`;
+    if (nodeWValEl) nodeWValEl.textContent = String(nodeW);
+    if (nodeHValEl) nodeHValEl.textContent = String(nodeH);
+  };
+
+  const commitOpacity = (silent = false) => {
+    const v = opacityPct / 100;
     applyOpacity(v);
     localStorage.setItem("rs_opacity", v.toFixed(2));
-    opacityInput.value = Math.round(v * 100);
-    setStatus(`투명도 적용: ${Math.round(v * 100)}%`, "info");
+    if (!silent) setStatus(`투명도 적용: ${opacityPct}%`, "info");
   };
 
-  const applyNodeWInput = () => {
-    const w = Math.min(140, Math.max(52, Number(nodeWInput.value) || 72));
-    const h = Math.min(80, Math.max(28, Number(nodeHInput.value) || 48));
-    applyNodeSize(w, h);
-    localStorage.setItem("rs_node_w", String(Math.round(w)));
-    nodeWInput.value = Math.round(w);
-    setStatus(`X 적용: ${Math.round(w)}`, "info");
+  const commitNodeSize = (statusMsg, silent = false) => {
+    applyNodeSize(nodeW, nodeH);
+    localStorage.setItem("rs_node_w", String(nodeW));
+    localStorage.setItem("rs_node_h", String(nodeH));
+    if (!silent) setStatus(statusMsg, "info");
   };
 
-  const applyNodeHInput = () => {
-    const w = Math.min(140, Math.max(52, Number(nodeWInput.value) || 72));
-    const h = Math.min(80, Math.max(28, Number(nodeHInput.value) || 48));
-    applyNodeSize(w, h);
-    localStorage.setItem("rs_node_h", String(Math.round(h)));
-    nodeHInput.value = Math.round(h);
-    setStatus(`Y 적용: ${Math.round(h)}`, "info");
-  };
+  renderControlValues();
+  commitOpacity(true);
+  commitNodeSize("노드 크기 적용", true);
 
-  opacityInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyOpacityInput();
-  });
-  nodeWInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyNodeWInput();
-  });
-  nodeHInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyNodeHInput();
-  });
+  if (opacityDecBtn) {
+    opacityDecBtn.addEventListener("click", () => {
+      opacityPct = Math.max(10, opacityPct - 5);
+      renderControlValues();
+      commitOpacity();
+    });
+  }
+  if (opacityIncBtn) {
+    opacityIncBtn.addEventListener("click", () => {
+      opacityPct = Math.min(100, opacityPct + 5);
+      renderControlValues();
+      commitOpacity();
+    });
+  }
+  if (nodeWDecBtn) {
+    nodeWDecBtn.addEventListener("click", () => {
+      nodeW = Math.max(52, nodeW - 4);
+      renderControlValues();
+      commitNodeSize(`X 적용: ${nodeW}`);
+    });
+  }
+  if (nodeWIncBtn) {
+    nodeWIncBtn.addEventListener("click", () => {
+      nodeW = Math.min(140, nodeW + 4);
+      renderControlValues();
+      commitNodeSize(`X 적용: ${nodeW}`);
+    });
+  }
+  if (nodeHDecBtn) {
+    nodeHDecBtn.addEventListener("click", () => {
+      nodeH = Math.max(28, nodeH - 4);
+      renderControlValues();
+      commitNodeSize(`Y 적용: ${nodeH}`);
+    });
+  }
+  if (nodeHIncBtn) {
+    nodeHIncBtn.addEventListener("click", () => {
+      nodeH = Math.min(80, nodeH + 4);
+      renderControlValues();
+      commitNodeSize(`Y 적용: ${nodeH}`);
+    });
+  }
 
   els.settingsToggle.addEventListener("click", () => {
     const hidden = els.settingsPanel.classList.toggle("hidden");
