@@ -770,8 +770,8 @@ function initSettings() {
 
   const saved = {
     opacity: parseFloat(localStorage.getItem("rs_opacity") ?? "0.65"),
-    nodeW:   parseInt(localStorage.getItem("rs_node_w")   ?? "72",  10),
-    nodeH:   parseInt(localStorage.getItem("rs_node_h")   ?? "48",  10),
+    nodeW:   parseInt(localStorage.getItem("rs_node_w")   ?? "52",  10),
+    nodeH:   parseInt(localStorage.getItem("rs_node_h")   ?? "40",  10),
   };
 
   const opacityDecBtn = document.getElementById("ctrl-opacity-dec");

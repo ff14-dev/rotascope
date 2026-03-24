@@ -44,34 +44,44 @@
           </div>
         </div>
         <div class="sp-row">
-          <label>X</label>
-          <div class="sp-stepper">
-            <button id="ctrl-node-w-dec" type="button" class="sp-step-btn" aria-label="X 감소">-</button>
-            <span id="ctrl-node-w-val" class="sp-step-val">72</span>
-            <button id="ctrl-node-w-inc" type="button" class="sp-step-btn" aria-label="X 증가">+</button>
+          <label>크기</label>
+          <div class="sp-dual">
+            <div class="sp-mini-block">
+              <span class="sp-mini-label">X</span>
+              <div class="sp-stepper sp-stepper-compact">
+                <button id="ctrl-node-w-dec" type="button" class="sp-step-btn" aria-label="X 감소">-</button>
+                <span id="ctrl-node-w-val" class="sp-step-val">52</span>
+                <button id="ctrl-node-w-inc" type="button" class="sp-step-btn" aria-label="X 증가">+</button>
+              </div>
+            </div>
+            <div class="sp-mini-block">
+              <span class="sp-mini-label">Y</span>
+              <div class="sp-stepper sp-stepper-compact">
+                <button id="ctrl-node-h-dec" type="button" class="sp-step-btn" aria-label="Y 감소">-</button>
+                <span id="ctrl-node-h-val" class="sp-step-val">40</span>
+                <button id="ctrl-node-h-inc" type="button" class="sp-step-btn" aria-label="Y 증가">+</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="sp-row">
-          <label>Y</label>
-          <div class="sp-stepper">
-            <button id="ctrl-node-h-dec" type="button" class="sp-step-btn" aria-label="Y 감소">-</button>
-            <span id="ctrl-node-h-val" class="sp-step-val">48</span>
-            <button id="ctrl-node-h-inc" type="button" class="sp-step-btn" aria-label="Y 증가">+</button>
-          </div>
-        </div>
-        <div class="sp-row">
-          <label>타임라인</label>
-          <div id="skill-slot-buttons" class="enc-btn-group">
-            <button type="button" class="enc-btn" data-timeline-slots="3">3</button>
-            <button type="button" class="enc-btn" data-timeline-slots="5">5</button>
-            <button type="button" class="enc-btn" data-timeline-slots="7">7</button>
-          </div>
-        </div>
-        <div class="sp-row">
-          <label>아래로그</label>
-          <div id="skill-log-visibility-buttons" class="enc-btn-group">
-            <button type="button" class="enc-btn" data-skill-log-visible="1">표시</button>
-            <button type="button" class="enc-btn" data-skill-log-visible="0">숨김</button>
+          <label>표시</label>
+          <div class="sp-dual">
+            <div class="sp-mini-block">
+              <span class="sp-mini-label">타임라인</span>
+              <div id="skill-slot-buttons" class="enc-btn-group">
+                <button type="button" class="enc-btn" data-timeline-slots="3">3</button>
+                <button type="button" class="enc-btn" data-timeline-slots="5">5</button>
+                <button type="button" class="enc-btn" data-timeline-slots="7">7</button>
+              </div>
+            </div>
+            <div class="sp-mini-block">
+              <span class="sp-mini-label">아래로그</span>
+              <div id="skill-log-visibility-buttons" class="enc-btn-group">
+                <button type="button" class="enc-btn" data-skill-log-visible="1">표시</button>
+                <button type="button" class="enc-btn" data-skill-log-visible="0">숨김</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
