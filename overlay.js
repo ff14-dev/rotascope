@@ -93,8 +93,12 @@ function parseParams() {
 
 // ── 정적 파일 fetch 헬퍼 ─────────────────────────────────────────────────
 function staticUrl(path) {
-  // path 는 항상 / 로 시작
-  return state.dataBase + path;
+  const normalized = String(path || "").replace(/^\/+/, "");
+  if (state.dataBase) {
+    return `${state.dataBase.replace(/\/+$/, "")}/${normalized}`;
+  }
+  // GitHub Pages 프로젝트 경로(/<repo>/)에서도 동작하도록 상대경로 사용
+  return `./${normalized}`;
 }
 
 // ── 스킬명 로드 (configs/skill_name_overrides_{job}.json) ─────────────────
