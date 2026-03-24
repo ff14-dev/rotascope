@@ -41,6 +41,7 @@ const state = {
   currentTimelineIndex: 0,
   rotationCandidates: [],
   selectedRotationIndex: 0,
+  skillLogMax: 5,
   overlayWs: null,
 };
 
@@ -353,7 +354,8 @@ function findSkillIcon(abilityName) {
 function renderSkillLog() {
   if (!els.skillLog) return;
   els.skillLog.innerHTML = "";
-  state.skillLog.forEach(({ ability, icon }) => {
+  const visibleLogs = state.skillLog.slice(-state.skillLogMax);
+  visibleLogs.forEach(({ ability, icon }) => {
     const entry = document.createElement("div");
     entry.className = "skill-entry";
     if (icon) {
@@ -391,7 +393,7 @@ function handleAbility(logLine) {
 
   // 스킬로그는 전투 전후 모두 표시
   state.skillLog.push({ ability: abilityName, icon: findSkillIcon(abilityName) });
-  if (state.skillLog.length > 8) state.skillLog.shift();
+  if (state.skillLog.length > state.skillLogMax) state.skillLog.shift();
   renderSkillLog();
 
   const expectedEntry = state.timeline[state.expectedIndex] || null;
@@ -703,6 +705,30 @@ function initSettings() {
   }
   renderLogPicker();
 
+  const slotButtons = Array.from(document.querySelectorAll("[data-skill-slots]"));
+  const syncSlotButtons = () => {
+    slotButtons.forEach((btn) => {
+      btn.classList.toggle("active", Number(btn.dataset.skillSlots) === state.skillLogMax);
+    });
+  };
+  const savedSkillSlots = Number(localStorage.getItem("rs_skill_slots") || "5");
+  state.skillLogMax = [3, 5, 7].includes(savedSkillSlots) ? savedSkillSlots : 5;
+  syncSlotButtons();
+  slotButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = Number(btn.dataset.skillSlots);
+      if (![3, 5, 7].includes(next) || next === state.skillLogMax) return;
+      state.skillLogMax = next;
+      localStorage.setItem("rs_skill_slots", String(next));
+      if (state.skillLog.length > state.skillLogMax) {
+        state.skillLog = state.skillLog.slice(-state.skillLogMax);
+      }
+      syncSlotButtons();
+      renderSkillLog();
+      setStatus(`스킬칸 표시 수: ${next}`, "info");
+    });
+  });
+
   // ── 직업 표시 초기화 ────────────────────────────────────────────────────
   if (els.detectedJob) {
     els.detectedJob.textContent = state.job.toUpperCase();
@@ -725,7 +751,7 @@ function initSettings() {
   const nodeHIncBtn   = document.getElementById("ctrl-node-h-inc");
   const nodeHValEl    = document.getElementById("ctrl-node-h-val");
 
-  let opacityPct = Math.min(100, Math.max(10, Math.round(saved.opacity * 100)));
+  let opacityPct = Math.min(100, Math.max(0, Math.round(saved.opacity * 100)));
   let nodeW = Math.min(140, Math.max(52, Math.round(saved.nodeW)));
   let nodeH = Math.min(80, Math.max(28, Math.round(saved.nodeH)));
 
@@ -755,7 +781,7 @@ function initSettings() {
 
   if (opacityDecBtn) {
     opacityDecBtn.addEventListener("click", () => {
-      opacityPct = Math.max(10, opacityPct - 5);
+      opacityPct = Math.max(0, opacityPct - 5);
       renderControlValues();
       commitOpacity();
     });
