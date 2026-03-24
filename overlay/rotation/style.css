@@ -1,0 +1,322 @@
+* {
+  box-sizing: border-box;
+  font-family: "Pretendard", "Segoe UI", sans-serif;
+}
+
+:root {
+  --app-opacity: 0.65;
+  --node-w: 72px;
+  --node-icon: 48px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0);
+  color: #f8fafc;
+}
+
+/* ── 앱 컨테이너 ── */
+#app {
+  position: relative;
+  display: inline-block;
+  min-width: 400px;
+  padding: 38px 14px 12px;   /* 상단에 토글 버튼 공간 확보 */
+  background: rgba(15, 17, 24, var(--app-opacity));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+/* ── 설정 토글 버튼 ── */
+#settings-toggle {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 20;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+#settings-toggle:hover,
+#settings-toggle.open {
+  border-color: #60a5fa;
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.15);
+}
+
+/* ── 설정 패널 (드롭다운) ── */
+#settings-panel {
+  position: absolute;
+  top: 38px;
+  right: 8px;
+  min-width: 210px;
+  background: rgba(8, 10, 18, 0.97);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  z-index: 15;
+  transform-origin: top right;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+#settings-panel.hidden {
+  opacity: 0;
+  transform: scale(0.94) translateY(-4px);
+  pointer-events: none;
+}
+
+.sp-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 2px;
+}
+
+.sp-subtitle {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.sp-divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.15);
+  margin-bottom: 10px;
+}
+
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sp-row:last-child {
+  margin-bottom: 0;
+}
+
+.sp-row label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.sp-val {
+  font-size: 0.8rem;
+  color: #cbd5f5;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── 설정 패널 select ── */
+.sp-select {
+  flex: 1;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+.sp-select:focus {
+  border-color: #60a5fa;
+}
+
+.sp-select option {
+  background: #0f1726;
+}
+
+.sp-hint {
+  font-size: 0.68rem;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.sp-job-active {
+  color: #4ade80 !important;
+  font-weight: 700;
+}
+
+/* ── 슬라이더 ── */
+input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.2);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #60a5fa;
+  cursor: pointer;
+}
+
+/* ── 상태바 ── */
+#status-bar {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: #fcd34d;
+}
+
+/* ── 타임라인 ── */
+#timeline-container {
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+
+#timeline {
+  display: flex;
+  gap: 8px;
+  width: fit-content;
+}
+
+.node {
+  width: var(--node-w);
+  padding: 6px 6px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  font-size: 0.72rem;
+  transition: transform 120ms ease, border-color 120ms ease;
+  cursor: pointer;
+}
+
+.node img {
+  width: var(--node-icon);
+  height: var(--node-icon);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.node-fallback {
+  width: var(--node-icon);
+  height: var(--node-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 8px;
+}
+
+.node.current {
+  border-color: rgba(96, 165, 250, 0.9);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.4);
+  transform: translateY(-4px);
+}
+
+.node.past {
+  opacity: 0.45;
+  filter: saturate(0.7);
+}
+
+.node.future {
+  opacity: 0.88;
+}
+
+.node-marker {
+  margin-top: 2px;
+  font-size: 0.62rem;
+  color: #93c5fd;
+  letter-spacing: 0.03em;
+}
+
+.node.past    .node-marker { color: #94a3b8; }
+.node.current .node-marker { color: #67e8f9; font-weight: 700; }
+
+.node:hover,
+.skill-entry:hover {
+  filter: brightness(1.1);
+}
+
+/* ── 스킬 로그 ── */
+#skill-log-panel {
+  margin-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 8px;
+}
+
+#skill-log {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 52px;
+}
+
+.skill-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.4;
+  transition: opacity 200ms ease;
+  cursor: pointer;
+}
+
+.skill-entry:last-child        { opacity: 1; }
+.skill-entry:nth-last-child(2) { opacity: 0.7; }
+.skill-entry:nth-last-child(3) { opacity: 0.55; }
+
+.skill-entry img {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.skill-entry .skill-no-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.skill-entry span {
+  font-size: 0.65rem;
+  color: #cbd5f5;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
