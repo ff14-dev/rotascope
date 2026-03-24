@@ -39,6 +39,8 @@ const state = {
   skillNameReverseMap: {},
   ignoredAbilitiesNormalized: new Set(),
   currentTimelineIndex: 0,
+  rotationCandidates: [],
+  selectedRotationIndex: 0,
   overlayWs: null,
 };
 
@@ -63,6 +65,9 @@ const els = {
   player:         document.getElementById("player-label"),
   detectedJob:    document.getElementById("detected-job"),
   status:         document.getElementById("status-text"),
+  logPrev:        document.getElementById("log-prev"),
+  logNext:        document.getElementById("log-next"),
+  logIndex:       document.getElementById("log-index"),
   timeline:       document.getElementById("timeline"),
   skillLog:       document.getElementById("skill-log"),
   settingsToggle: document.getElementById("settings-toggle"),
@@ -84,7 +89,7 @@ function parseParams() {
     localStorage.getItem("rs_encounter") ||
     state.encounter
   ).toLowerCase();
-  state.job       = String(params.get("job") || localStorage.getItem("rs_job") || "sam").toLowerCase();
+  state.job       = params.get("job") || localStorage.getItem("rs_job") || "sam";
   state.dataBase  = (params.get("base") || "").replace(/\/$/, "");
   state.report    = params.get("report");
   state.fight     = params.has("fight") ? Number(params.get("fight")) : null;
@@ -93,12 +98,8 @@ function parseParams() {
 
 // ── 정적 파일 fetch 헬퍼 ─────────────────────────────────────────────────
 function staticUrl(path) {
-  const normalized = String(path || "").replace(/^\/+/, "");
-  if (state.dataBase) {
-    return `${state.dataBase.replace(/\/+$/, "")}/${normalized}`;
-  }
-  // GitHub Pages 프로젝트 경로(/<repo>/)에서도 동작하도록 상대경로 사용
-  return `./${normalized}`;
+  // path 는 항상 / 로 시작
+  return state.dataBase + path;
 }
 
 // ── 스킬명 로드 (configs/skill_name_overrides_{job}.json) ─────────────────
@@ -142,26 +143,48 @@ async function fetchTimeline() {
     const rotations = Array.isArray(data.full_rotations) ? data.full_rotations : [];
     if (!rotations.length) throw new Error("full_rotations 데이터가 비어 있습니다");
 
-    // report/fight 파라미터가 있으면 해당 항목, 없으면 첫 번째
-    let target = rotations[0];
+    state.rotationCandidates = rotations.slice(0, 10);
+    state.selectedRotationIndex = 0;
     if (state.report && state.fight !== null) {
-      const found = rotations.find(
+      const foundIndex = state.rotationCandidates.findIndex(
         (r) => r.report_id === state.report && r.fight_id === state.fight
       );
-      if (found) target = found;
+      if (foundIndex >= 0) state.selectedRotationIndex = foundIndex;
     }
-
-    state.timeline = (target.timeline || []).filter((e) => !shouldIgnoreAbility(e?.ability));
-
-    const encKey = enc.replace(/-/g, "-").toUpperCase();
-    if (els.player) els.player.textContent = `${target.player || "Unknown"} · ${target.report_id} · fight ${target.fight_id}`;
-
-    renderTimelineWindow();
+    applySelectedRotation(false);
     setStatus("타임라인 로딩 완료 — 전투 시작 신호를 기다립니다.", "ok");
   } catch (err) {
     console.error(err);
     setStatus(`타임라인 불러오기 실패: ${err}`, "error");
   }
+}
+
+function applySelectedRotation(resetCombat = true) {
+  if (!state.rotationCandidates.length) return;
+  const idx = Math.min(
+    Math.max(0, state.selectedRotationIndex),
+    state.rotationCandidates.length - 1,
+  );
+  state.selectedRotationIndex = idx;
+  const target = state.rotationCandidates[idx];
+  state.timeline = (target.timeline || []).filter((e) => !shouldIgnoreAbility(e?.ability));
+  if (els.player) {
+    els.player.textContent = `${target.player || "Unknown"} · ${target.report_id} · fight ${target.fight_id}`;
+  }
+  renderLogPicker();
+  if (resetCombat) {
+    resetCombatState(`로그 ${idx + 1} 선택됨`);
+  } else {
+    renderTimelineWindow();
+  }
+}
+
+function renderLogPicker() {
+  const total = state.rotationCandidates.length || 1;
+  const current = Math.min(state.selectedRotationIndex + 1, total);
+  if (els.logIndex) els.logIndex.textContent = `${current} / ${total}`;
+  if (els.logPrev) els.logPrev.disabled = current <= 1;
+  if (els.logNext) els.logNext.disabled = current >= total;
 }
 
 // ── 스킬명 처리 ───────────────────────────────────────────────────────────
@@ -638,6 +661,22 @@ function initSettings() {
     });
   });
   syncEncounterButtons();
+
+  if (els.logPrev) {
+    els.logPrev.addEventListener("click", () => {
+      if (state.selectedRotationIndex <= 0) return;
+      state.selectedRotationIndex -= 1;
+      applySelectedRotation(true);
+    });
+  }
+  if (els.logNext) {
+    els.logNext.addEventListener("click", () => {
+      if (state.selectedRotationIndex >= state.rotationCandidates.length - 1) return;
+      state.selectedRotationIndex += 1;
+      applySelectedRotation(true);
+    });
+  }
+  renderLogPicker();
 
   // ── 직업 표시 초기화 ────────────────────────────────────────────────────
   if (els.detectedJob) {
