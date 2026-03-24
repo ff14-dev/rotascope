@@ -72,6 +72,7 @@ const els = {
   logPrev:        document.getElementById("log-prev"),
   logNext:        document.getElementById("log-next"),
   logIndex:       document.getElementById("log-index"),
+  combatReset:    document.getElementById("combat-reset"),
   timeline:       document.getElementById("timeline"),
   skillLog:       document.getElementById("skill-log"),
   settingsToggle: document.getElementById("settings-toggle"),
@@ -372,15 +373,6 @@ function renderSkillLog() {
     const label = document.createElement("span");
     label.textContent = ability;
     entry.appendChild(label);
-    entry.addEventListener("click", () => {
-      const idx = state.timeline.findIndex((e) => abilityMatches(e.ability, ability));
-      if (idx >= 0) {
-        state.currentTimelineIndex = idx;
-        state.expectedIndex = Math.min(idx + 1, state.timeline.length);
-        renderTimelineWindow();
-        setStatus(`입력 스킬 기준 이동: ${ability}`, "info");
-      }
-    });
     els.skillLog.appendChild(entry);
   });
 }
@@ -731,6 +723,12 @@ function initSettings() {
     });
   }
   renderLogPicker();
+
+  if (els.combatReset) {
+    els.combatReset.addEventListener("click", () => {
+      resetCombatState("수동 초기화됨 — 초읽기를 기다립니다.");
+    });
+  }
 
   const slotButtons = Array.from(document.querySelectorAll("[data-timeline-slots]"));
   const syncSlotButtons = () => {
