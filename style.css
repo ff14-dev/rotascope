@@ -5,8 +5,8 @@
 
 :root {
   --app-opacity: 0.65;
-  --node-w: 72px;
-  --node-icon: 48px;
+  --node-w: 52px;
+  --node-icon: 40px;
 }
 
 body {
@@ -211,6 +211,40 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.sp-dual {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.sp-mini-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.sp-mini-label {
+  display: block;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.sp-stepper-compact {
+  gap: 4px;
+}
+
+.sp-stepper-compact .sp-step-btn {
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+}
+
+.sp-stepper-compact .sp-step-val {
+  padding: 2px 4px;
+  font-size: 0.72rem;
 }
 
 .sp-step-btn {
