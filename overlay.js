@@ -75,7 +75,7 @@ const els = {
   timeline:       document.getElementById("timeline"),
   skillLog:       document.getElementById("skill-log"),
   settingsToggle: document.getElementById("settings-toggle"),
-  settingsPanel:  document.getElementById("settings-panel"),
+  settingsView:   document.getElementById("settings-view"),
 };
 
 // ── URL 파라미터 ──────────────────────────────────────────────────────────
@@ -855,8 +855,9 @@ function initSettings() {
     });
   }
 
+  // 새로고침 시 자동으로 설정 화면이 뜨지 않도록 항상 메인 화면으로 초기화
   let settingsMode = false;
-  setSettingsMode(settingsMode);
+  setSettingsMode(false);
   if (els.settingsToggle) {
     els.settingsToggle.addEventListener("click", () => {
       settingsMode = !settingsMode;
