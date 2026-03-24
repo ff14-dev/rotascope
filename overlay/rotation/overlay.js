@@ -192,7 +192,11 @@ function abilityMatches(left, right) {
 }
 
 function shouldIgnoreAbility(name) {
-  return state.ignoredAbilitiesNormalized.has(normalizeAbilityName(name));
+  if (state.ignoredAbilitiesNormalized.has(normalizeAbilityName(name))) return true;
+  // 영문명 → 한글명 변환 후에도 체크 (타임라인은 영문, 무시목록은 한글일 수 있음)
+  const localized = state.skillNameMap[name];
+  if (localized && state.ignoredAbilitiesNormalized.has(normalizeAbilityName(localized))) return true;
+  return false;
 }
 
 // ── 타임라인 렌더링 ───────────────────────────────────────────────────────
@@ -235,7 +239,7 @@ function renderTimelineWindow() {
     node.appendChild(time);
 
     const label = document.createElement("div");
-    label.textContent = event.ability || "-";
+    label.textContent = localizedName(event.ability) || "-";
     node.appendChild(label);
 
     if (state.startTs) {
@@ -269,13 +273,12 @@ function handleCombatStart(ts) {
   if (state.startTs) return;
   state.startTs = ts;
   state.lastAbilityTs = 0;
-  state.expectedIndex = 0;
-  state.currentTimelineIndex = 0;
+  // 카운트 중 선입력으로 전진한 인덱스는 유지 (리셋 안 함)
   renderTimelineWindow();
   setStatus("전투 시작 감지 — 타이머 동기화 완료!", "ok");
 }
 
-function handleCombatEnd() {
+function resetCombatState(statusMsg = "초읽기를 기다립니다.") {
   stopCountdown(false);
   state.startTs = null;
   state.expectedIndex = 0;
@@ -283,7 +286,12 @@ function handleCombatEnd() {
   state.skillLog = [];
   renderSkillLog();
   renderTimelineWindow();
-  setStatus("전투 종료 — 다시 시작하면 자동으로 갱신됩니다.", "info");
+  setStatus(statusMsg, "info");
+}
+
+function handleCombatEnd() {
+  resetCombatState("전투 종료 — 타임라인 초기화 중...");
+  fetchTimeline();
 }
 
 function findSkillIcon(abilityName) {
@@ -329,14 +337,25 @@ function handleAbility(logLine) {
   if (!rawAbilityName || AUTO_ATTACK_NAMES.has(rawAbilityName) || shouldIgnoreAbility(rawAbilityName)) return;
   const abilityName = localizedName(rawAbilityName);
 
+  // 스킬로그는 전투 전후 모두 표시
   state.skillLog.push({ ability: abilityName, icon: findSkillIcon(abilityName) });
   if (state.skillLog.length > 8) state.skillLog.shift();
   renderSkillLog();
 
-  if (!state.startTs) return;
-  state.lastAbilityTs = Date.now();
-  const elapsed       = (Date.now() - state.startTs) / 1000;
   const expectedEntry = state.timeline[state.expectedIndex] || null;
+
+  // 전투 시작 전(카운트다운 중): 첫 번째 예상 스킬과 일치할 때만 타임라인 전진, 나머지는 무시
+  if (!state.startTs) {
+    if (expectedEntry && abilityMatches(expectedEntry.ability, abilityName)) {
+      state.expectedIndex += 1;
+      state.currentTimelineIndex = Math.min(state.expectedIndex, Math.max(state.timeline.length - 1, 0));
+      renderTimelineWindow();
+      setStatus(`선입력 일치: ${abilityName}`, "ok");
+    }
+    return;
+  }
+
+  state.lastAbilityTs = Date.now();
   let matched = false;
   let matchedIndex = -1;
 
@@ -478,59 +497,111 @@ function dispatchOverlayPayload(payload) {
   }
 }
 
-// ── 직업 자동인식 ─────────────────────────────────────────────────────────
-function jobAbbrFromDetail(detail) {
-  if (!detail) return null;
-  const j = detail.job;
-  // 신버전 OverlayPlugin: job 이 "SAM" 같은 문자열
-  if (typeof j === "string" && j.length >= 2) return j.toLowerCase();
-  // 구버전: job 이 숫자 ID
-  if (typeof j === "number") return FFXIV_JOB_BY_ID[j] || null;
-  return null;
-}
+// ── 직업 자동인식 (ZeffUI 방식) ──────────────────────────────────────────
+// onPlayerChangedEvent: e.detail.job (소문자 string, 예: "sam")
+// getCombatants:        combatants[0].Job (대문자 J, string, 예: "SAM")
 
-async function handlePlayerChanged(detail) {
-  const abbr = jobAbbrFromDetail(detail);
+async function applyDetectedJob(abbr) {
   if (!abbr) return;
-  if (abbr === state.job) return;
-  state.job = abbr;
-  localStorage.setItem("rs_job", abbr);
+  const lower = abbr.toLowerCase();
+  if (lower === state.job) return;
+  state.job = lower;
+  localStorage.setItem("rs_job", lower);
   if (els.detectedJob) {
-    els.detectedJob.textContent = abbr.toUpperCase();
+    els.detectedJob.textContent = lower.toUpperCase();
     els.detectedJob.classList.add("sp-job-active");
   }
+  resetCombatState(`직업 변경: ${lower.toUpperCase()} — 스킬 데이터 로드 중...`);
   await fetchSkillNames();
   fetchTimeline();
 }
 
+// addOverlayListener("onPlayerChangedEvent") 콜백 — e.detail.job
+function onPlayerChangedEvent(e) {
+  const job = e?.detail?.job;
+  if (job) applyDetectedJob(job);
+}
+
+// getCombatants 결과에서 플레이어 직업 추출 — combatants[0].Job
+function getPlayerFromCombatants(data) {
+  if (!data?.combatants?.length) return;
+  const player = data.combatants[0];
+  if (player?.Job) applyDetectedJob(player.Job);
+}
+
+// 오버레이 로드 시 이미 인게임이면 onPlayerChangedEvent가 오지 않으므로
+// getCombatants 로 즉시 조회 (ZeffUI 동일 패턴)
+function queryCurrentPlayer() {
+  if (!window.callOverlayHandler) return;
+  callOverlayHandler({ call: "getCombatants" })
+    .then(getPlayerFromCombatants)
+    .catch(() => {});
+}
+
+// ── 로컬 서버 WebSocket 폴백 ──────────────────────────────────────────────
+function connectLocalActLogStream() {
+  // ?base= 없이 http://로 직접 로드된 경우 현재 오리진을 사용
+  const base = state.dataBase || (window.location.protocol === "http:" ? window.location.origin : "");
+  if (!base) return;
+  const wsUrl = base.replace(/^http/, "ws") + "/ws/act-log";
+  let ws;
+
+  const connect = () => {
+    ws = new WebSocket(wsUrl);
+    state.overlayWs = ws;
+
+    ws.onopen = () => setStatus("로컬 서버 연결 완료 — 전투 시작 신호를 기다립니다.", "ok");
+
+    ws.onmessage = (evt) => {
+      try {
+        const payload = JSON.parse(evt.data);
+        if (payload.type === "ping") return;
+        dispatchOverlayPayload(payload);
+      } catch {}
+    };
+
+    ws.onclose = () => {
+      setStatus("로컬 서버 연결 끊김 — 5초 후 재시도...", "warn");
+      setTimeout(connect, 5000);
+    };
+
+    ws.onerror = () => ws.close();
+  };
+
+  connect();
+}
+
 // ── OverlayPlugin 바인딩 ──────────────────────────────────────────────────
+function isLocalServer() {
+  // ?base= 는 JSON 파일 위치일 뿐 — ACT 연결 방식과 무관
+  // http://127.0.0.1 또는 localhost 로 직접 서빙될 때만 WS 로그 방식 사용
+  const h = window.location.hostname;
+  return h === "127.0.0.1" || h === "localhost";
+}
+
 function setupOverlayPlugin() {
-  if (!window.OverlayPluginApi) {
+  // 로컬 서버: WS 로그 파일 스트리밍 사용
+  if (isLocalServer()) {
+    connectLocalActLogStream();
+    return;
+  }
+
+  // common.min.js (ngld OverlayPlugin) 가 addOverlayListener 를 제공
+  if (!window.addOverlayListener) {
     setStatus("OverlayPlugin 없음 — ACT에서 URL로 로드해 주세요.", "warn");
     return;
   }
-  const addListenerCompat = (name, cb) => {
-    if (window.addOverlayListener) { window.addOverlayListener(name, cb); return; }
-    document.addEventListener(name, (evt) => cb(evt && "detail" in evt ? evt.detail : evt));
-  };
-  const startEventsCompat = async () => {
-    if (window.startOverlayEvents) { window.startOverlayEvents(); return; }
-    if (window.callOverlayHandler) try {
-      await window.callOverlayHandler({ call: "subscribe", events: ["LogLine", "ChatLog", "onLogEvent", "onPlayerChangedEvent"] });
-    } catch {}
-  };
-  const bindListeners = async () => {
-    addListenerCompat("LogLine",              handleOverlayEvent);
-    addListenerCompat("ChatLog",              handleOverlayEvent);
-    addListenerCompat("onLogEvent",           handleLegacyLogEvent);
-    addListenerCompat("onPlayerChangedEvent", (e) => {
-      handlePlayerChanged(e?.detail || e);
-    });
-    await startEventsCompat();
-    setStatus("OverlayPlugin 연결 완료 — 전투 시작 신호를 기다립니다.", "ok");
-  };
-  if (window.OverlayPluginApi?.ready?.then) window.OverlayPluginApi.ready.then(bindListeners);
-  else bindListeners();
+
+  addOverlayListener("LogLine",              handleOverlayEvent);
+  addOverlayListener("ChatLog",              handleOverlayEvent);
+  addOverlayListener("onLogEvent",           handleLegacyLogEvent);
+  addOverlayListener("onPlayerChangedEvent", onPlayerChangedEvent);
+
+  startOverlayEvents();
+  setStatus("OverlayPlugin 연결 완료 — 전투 시작 신호를 기다립니다.", "ok");
+
+  // 이미 인게임 상태일 경우 직업 즉시 조회
+  queryCurrentPlayer();
 }
 
 // ── 설정 패널 (투명도 / X·Y 크기) ────────────────────────────────────────
