@@ -100,7 +100,7 @@ function staticUrl(path) {
 // ── 스킬명 로드 (configs/skill_name_overrides_{job}.json) ─────────────────
 async function fetchSkillNames() {
   try {
-    const url = staticUrl(`/configs/skill_name_overrides_${state.job}.json`);
+    const url = staticUrl(`configs/skill_name_overrides_${state.job}.json`);
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return;
     const data = await res.json();
@@ -117,7 +117,7 @@ async function fetchSkillNames() {
 // ── 오버레이 설정 로드 (configs/overlay_settings.json) ───────────────────
 async function fetchOverlaySettings() {
   try {
-    const url = staticUrl("/configs/overlay_settings.json");
+    const url = staticUrl("configs/overlay_settings.json");
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return;
     const data = await res.json();
@@ -129,7 +129,7 @@ async function fetchOverlaySettings() {
 // ── 타임라인 로드 (data/rotations/{job}/{encounter}.json) ─────────────────
 async function fetchTimeline() {
   const enc = state.encounter.toLowerCase();
-  const url = staticUrl(`/data/rotations/${state.job}/${enc}.json`);
+  const url = staticUrl(`data/rotations/${state.job}/${enc}.json`);
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
