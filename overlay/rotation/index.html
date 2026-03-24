@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>RotaScope Overlay</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- 설정 토글 버튼 (우상단 고정) -->
+      <button id="settings-toggle" type="button" title="설정">⚙</button>
+
+      <!-- 접힘/펼침 설정 패널 -->
+      <div id="settings-panel" class="hidden">
+        <div class="sp-row">
+          <label for="ctrl-encounter">보스</label>
+          <select id="ctrl-encounter" class="sp-select"></select>
+        </div>
+        <div class="sp-row">
+          <label>직업</label>
+          <span id="detected-job" class="sp-val sp-job">--</span>
+          <span class="sp-hint">ACT 자동</span>
+        </div>
+        <div class="sp-subtitle" id="player-label">대기 중...</div>
+        <div class="sp-divider"></div>
+        <div class="sp-row">
+          <label for="ctrl-opacity">투명도</label>
+          <input id="ctrl-opacity" type="range" min="0" max="1" step="0.05" value="0.65" />
+          <span id="ctrl-opacity-val" class="sp-val">65%</span>
+        </div>
+        <div class="sp-row">
+          <label for="ctrl-node-w">X</label>
+          <input id="ctrl-node-w" type="range" min="52" max="140" step="4" value="72" />
+          <span id="ctrl-node-w-val" class="sp-val">72</span>
+        </div>
+        <div class="sp-row">
+          <label for="ctrl-node-h">Y</label>
+          <input id="ctrl-node-h" type="range" min="28" max="80" step="4" value="48" />
+          <span id="ctrl-node-h-val" class="sp-val">48</span>
+        </div>
+      </div>
+
+      <section id="status-bar">
+        <span id="status-text">API에서 데이터를 불러오는 중입니다.</span>
+      </section>
+      <section id="timeline-container">
+        <div id="timeline"></div>
+      </section>
+      <section id="skill-log-panel">
+        <div id="skill-log"></div>
+      </section>
+
+    </div>
+    <script src="overlay.js"></script>
+  </body>
+</html>
