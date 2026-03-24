@@ -7,9 +7,14 @@
   </head>
   <body>
     <div id="app">
-
-      <!-- 설정 토글 버튼 (우상단 고정) -->
-      <button id="settings-toggle" type="button" title="설정">⚙</button>
+      <section id="top-controls">
+        <section id="log-picker">
+          <button id="log-prev" type="button" class="log-nav-btn" aria-label="이전 로그">◀</button>
+          <span id="log-index">1 / 1</span>
+          <button id="log-next" type="button" class="log-nav-btn" aria-label="다음 로그">▶</button>
+        </section>
+        <button id="settings-toggle" type="button" title="설정">⚙</button>
+      </section>
 
       <!-- 접힘/펼침 설정 패널 -->
       <div id="settings-panel" class="hidden">
@@ -47,19 +52,14 @@
         </div>
       </div>
 
-      <section id="status-bar">
-        <span id="status-text">타임라인 데이터를 불러오는 중입니다.</span>
-      </section>
-      <section id="log-picker">
-        <button id="log-prev" type="button" class="log-nav-btn" aria-label="이전 로그">◀</button>
-        <span id="log-index">1 / 1</span>
-        <button id="log-next" type="button" class="log-nav-btn" aria-label="다음 로그">▶</button>
-      </section>
       <section id="timeline-container">
         <div id="timeline"></div>
       </section>
       <section id="skill-log-panel">
         <div id="skill-log"></div>
+      </section>
+      <section id="status-bar">
+        <span id="status-text">타임라인 데이터를 불러오는 중입니다.</span>
       </section>
 
     </div>

@@ -21,18 +21,24 @@ body {
   position: relative;
   display: inline-block;
   min-width: 400px;
-  padding: 38px 14px 12px;   /* 상단에 토글 버튼 공간 확보 */
+  padding: 10px 14px 10px;
   background: rgba(15, 17, 24, var(--app-opacity));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   backdrop-filter: blur(12px);
 }
 
+/* ── 상단 컨트롤 행 ── */
+#top-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 /* ── 설정 토글 버튼 ── */
 #settings-toggle {
-  position: absolute;
-  top: 7px;
-  right: 8px;
   width: 26px;
   height: 26px;
   border-radius: 6px;
@@ -46,7 +52,6 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0;
-  z-index: 20;
   transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
 }
 
@@ -60,8 +65,8 @@ body {
 /* ── 설정 패널 (드롭다운) ── */
 #settings-panel {
   position: absolute;
-  top: 38px;
-  right: 8px;
+  top: 42px;
+  right: 14px;
   min-width: 210px;
   background: rgba(8, 10, 18, 0.97);
   border: 1px solid rgba(148, 163, 184, 0.2);
@@ -185,16 +190,17 @@ body {
 
 /* ── 상태바 ── */
 #status-bar {
-  margin-bottom: 10px;
-  font-size: 0.85rem;
-  color: #fcd34d;
+  margin-top: 8px;
+  font-size: 0.66rem;
+  color: #94a3b8;
+  text-align: right;
+  line-height: 1.2;
 }
 
 #log-picker {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
   color: #cbd5f5;
   font-size: 0.78rem;
 }
