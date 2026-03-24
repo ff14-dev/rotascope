@@ -17,7 +17,8 @@
       </section>
 
       <!-- 접힘/펼침 설정 패널 -->
-      <div id="settings-panel" class="hidden">
+      <div id="settings-panel">
+        <div class="sp-head">오버레이 설정</div>
         <div class="sp-row">
           <label>층 선택</label>
           <div id="encounter-buttons" class="enc-btn-group">
@@ -65,6 +66,13 @@
             <button type="button" class="enc-btn" data-timeline-slots="3">3</button>
             <button type="button" class="enc-btn" data-timeline-slots="5">5</button>
             <button type="button" class="enc-btn" data-timeline-slots="7">7</button>
+          </div>
+        </div>
+        <div class="sp-row">
+          <label>아래로그</label>
+          <div id="skill-log-visibility-buttons" class="enc-btn-group">
+            <button type="button" class="enc-btn" data-skill-log-visible="1">표시</button>
+            <button type="button" class="enc-btn" data-skill-log-visible="0">숨김</button>
           </div>
         </div>
       </div>
