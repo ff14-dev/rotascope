@@ -89,7 +89,7 @@ function parseParams() {
     localStorage.getItem("rs_encounter") ||
     state.encounter
   ).toLowerCase();
-  state.job       = params.get("job") || localStorage.getItem("rs_job") || "sam";
+  state.job       = String(params.get("job") || localStorage.getItem("rs_job") || "sam").toLowerCase();
   state.dataBase  = (params.get("base") || "").replace(/\/$/, "");
   state.report    = params.get("report");
   state.fight     = params.has("fight") ? Number(params.get("fight")) : null;
@@ -98,8 +98,12 @@ function parseParams() {
 
 // ── 정적 파일 fetch 헬퍼 ─────────────────────────────────────────────────
 function staticUrl(path) {
-  // path 는 항상 / 로 시작
-  return state.dataBase + path;
+  const normalized = String(path || "").replace(/^\/+/, "");
+  if (state.dataBase) {
+    return `${state.dataBase.replace(/\/+$/, "")}/${normalized}`;
+  }
+  // GitHub Pages 프로젝트 경로(/<repo>/)에서도 동작하도록 상대경로 사용
+  return `./${normalized}`;
 }
 
 // ── 스킬명 로드 (configs/skill_name_overrides_{job}.json) ─────────────────
@@ -134,11 +138,32 @@ async function fetchOverlaySettings() {
 // ── 타임라인 로드 (data/rotations/{job}/{encounter}.json) ─────────────────
 async function fetchTimeline() {
   const enc = state.encounter.toLowerCase();
-  const url = staticUrl(`/data/rotations/${state.job}/${enc}.json`);
   try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
-    const data = await res.json();
+    const candidatePaths = [
+      `/data/rotations/${state.job}/${enc}.json`,
+      `/data/rotations/${enc}.json`,
+    ];
+    let data = null;
+    let loadedUrl = "";
+    let lastErr = null;
+
+    for (const p of candidatePaths) {
+      const url = staticUrl(p);
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) {
+          lastErr = new Error(`HTTP ${res.status} — ${url}`);
+          continue;
+        }
+        data = await res.json();
+        loadedUrl = url;
+        break;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+
+    if (!data) throw (lastErr || new Error("타임라인 JSON을 불러오지 못했습니다"));
 
     const rotations = Array.isArray(data.full_rotations) ? data.full_rotations : [];
     if (!rotations.length) throw new Error("full_rotations 데이터가 비어 있습니다");
@@ -152,7 +177,7 @@ async function fetchTimeline() {
       if (foundIndex >= 0) state.selectedRotationIndex = foundIndex;
     }
     applySelectedRotation(false);
-    setStatus("타임라인 로딩 완료 — 전투 시작 신호를 기다립니다.", "ok");
+    setStatus(`타임라인 로딩 완료 (${loadedUrl}) — 전투 시작 신호를 기다립니다.`, "ok");
   } catch (err) {
     console.error(err);
     setStatus(`타임라인 불러오기 실패: ${err}`, "error");
