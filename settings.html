@@ -28,7 +28,7 @@
       color: #94a3b8;
       margin-bottom: 5px;
     }
-    select, input[type="number"], input[type="text"] {
+    input[type="number"], input[type="text"] {
       width: 100%;
       background: #1e293b;
       border: 1px solid #334155;
@@ -38,10 +38,32 @@
       padding: 6px 10px;
       outline: none;
     }
-    select:focus, input:focus {
+    input:focus {
       border-color: #60a5fa;
     }
-    select option { background: #0f172a; }
+    .enc-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .enc-btn {
+      border: 1px solid #334155;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.82rem;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .enc-btn:hover {
+      border-color: #60a5fa;
+    }
+    .enc-btn.active {
+      border-color: #38bdf8;
+      background: #0c4a6e;
+      color: #e0f2fe;
+      font-weight: 700;
+    }
     .row {
       display: flex;
       gap: 8px;
@@ -87,7 +109,7 @@
 
   <div class="group">
     <label>보스</label>
-    <select id="s-encounter"></select>
+    <div id="s-encounter-buttons" class="enc-btn-group"></div>
   </div>
 
   <div class="group">
@@ -103,7 +125,7 @@
       <input type="number" id="s-opacity" min="0" max="100" step="5" placeholder="65" />
       <span class="unit">%</span>
     </div>
-    <div class="hint">Enter 또는 포커스 해제 시 적용</div>
+    <div class="hint">숫자 입력 후 Enter로 적용</div>
   </div>
 
   <div class="group">
@@ -134,23 +156,37 @@
     };
 
     // ── 초기값 로드 ───────────────────────────────────────────
-    const enc     = document.getElementById("s-encounter");
+    const encWrap = document.getElementById("s-encounter-buttons");
     const opacity = document.getElementById("s-opacity");
     const nodeW   = document.getElementById("s-node-w");
     const nodeH   = document.getElementById("s-node-h");
     const jobEl   = document.getElementById("detected-job-display");
     const savedEl = document.getElementById("saved-msg");
 
-    // 보스 옵션 생성
+    // 보스 버튼 생성
     Object.entries(ENCOUNTER_LABELS).forEach(([key, label]) => {
-      const opt = document.createElement("option");
-      opt.value = key;
-      opt.textContent = label;
-      enc.appendChild(opt);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "enc-btn";
+      btn.dataset.encounter = key;
+      btn.textContent = label;
+      btn.addEventListener("click", () => {
+        localStorage.setItem("rs_encounter", key);
+        syncEncounterButtons(key);
+        showSaved();
+      });
+      encWrap.appendChild(btn);
     });
 
+    function syncEncounterButtons(selected) {
+      Array.from(encWrap.querySelectorAll(".enc-btn")).forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.encounter === selected);
+      });
+    }
+
     function load() {
-      enc.value     = localStorage.getItem("rs_encounter") || "m9s";
+      const selected = localStorage.getItem("rs_encounter") || "m9s";
+      syncEncounterButtons(selected);
       opacity.value = Math.round((parseFloat(localStorage.getItem("rs_opacity") ?? "0.65")) * 100);
       nodeW.value   = parseInt(localStorage.getItem("rs_node_w") ?? "72", 10);
       nodeH.value   = parseInt(localStorage.getItem("rs_node_h") ?? "48", 10);
@@ -172,7 +208,6 @@
     }
 
     function save() {
-      localStorage.setItem("rs_encounter", enc.value);
       const op = Math.min(100, Math.max(0, Number(opacity.value) || 65)) / 100;
       localStorage.setItem("rs_opacity", op.toFixed(2));
       const w = Math.min(200, Math.max(40, Number(nodeW.value) || 72));
@@ -182,11 +217,8 @@
       showSaved();
     }
 
-    enc.addEventListener("change", save);
-
     [opacity, nodeW, nodeH].forEach(el => {
-      el.addEventListener("keydown", e => { if (e.key === "Enter") { save(); el.blur(); } });
-      el.addEventListener("blur", save);
+      el.addEventListener("keydown", e => { if (e.key === "Enter") save(); });
     });
   </script>
 </body>
