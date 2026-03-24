@@ -43,6 +43,7 @@ const state = {
   selectedRotationIndex: 0,
   timelineSlots: 7,
   skillLogMax: 20,
+  showSkillLog: true,
   overlayWs: null,
 };
 
@@ -64,6 +65,7 @@ function isDuplicateEvent(parts) {
 }
 
 const els = {
+  app:            document.getElementById("app"),
   player:         document.getElementById("player-label"),
   detectedJob:    document.getElementById("detected-job"),
   status:         document.getElementById("status-text"),
@@ -668,8 +670,22 @@ function applyNodeSize(w, h) {
 }
 
 function initSettings() {
+  const setSettingsMode = (enabled) => {
+    if (!els.app || !els.settingsToggle) return;
+    els.app.classList.toggle("settings-mode", enabled);
+    els.settingsToggle.classList.toggle("open", enabled);
+    els.settingsToggle.textContent = enabled ? "닫기" : "⚙";
+    els.settingsToggle.title = enabled ? "설정 닫기" : "설정";
+  };
+
+  const applySkillLogVisibility = (visible) => {
+    state.showSkillLog = !!visible;
+    localStorage.setItem("rs_show_skill_log", state.showSkillLog ? "1" : "0");
+    if (els.app) els.app.classList.toggle("hide-skill-log", !state.showSkillLog);
+  };
+
   // ── 층 버튼 선택 ─────────────────────────────────────────────────────────
-  const encounterButtons = Array.from(document.querySelectorAll(".enc-btn"));
+  const encounterButtons = Array.from(document.querySelectorAll("[data-encounter]"));
   const syncEncounterButtons = () => {
     encounterButtons.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.encounter === state.encounter);
@@ -722,6 +738,27 @@ function initSettings() {
       syncSlotButtons();
       renderTimelineWindow();
       setStatus(`타임라인 칸 수: ${next}`, "info");
+    });
+  });
+
+  const skillLogVisButtons = Array.from(document.querySelectorAll("[data-skill-log-visible]"));
+  const syncSkillLogVisButtons = () => {
+    skillLogVisButtons.forEach((btn) => {
+      btn.classList.toggle(
+        "active",
+        (btn.dataset.skillLogVisible === "1") === state.showSkillLog,
+      );
+    });
+  };
+  applySkillLogVisibility(localStorage.getItem("rs_show_skill_log") !== "0");
+  syncSkillLogVisButtons();
+  skillLogVisButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const visible = btn.dataset.skillLogVisible === "1";
+      if (visible === state.showSkillLog) return;
+      applySkillLogVisibility(visible);
+      syncSkillLogVisButtons();
+      setStatus(visible ? "아래 로그 표시" : "아래 로그 숨김", "info");
     });
   });
 
@@ -818,18 +855,14 @@ function initSettings() {
     });
   }
 
-  els.settingsToggle.addEventListener("click", () => {
-    const hidden = els.settingsPanel.classList.toggle("hidden");
-    els.settingsToggle.classList.toggle("open", !hidden);
-  });
-  document.addEventListener("click", (e) => {
-    if (!els.settingsPanel.classList.contains("hidden") &&
-        !els.settingsPanel.contains(e.target) &&
-        e.target !== els.settingsToggle) {
-      els.settingsPanel.classList.add("hidden");
-      els.settingsToggle.classList.remove("open");
-    }
-  });
+  let settingsMode = false;
+  setSettingsMode(settingsMode);
+  if (els.settingsToggle) {
+    els.settingsToggle.addEventListener("click", () => {
+      settingsMode = !settingsMode;
+      setSettingsMode(settingsMode);
+    });
+  }
 }
 
 // ── 진입점 ────────────────────────────────────────────────────────────────

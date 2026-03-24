@@ -62,25 +62,43 @@ body {
   background: rgba(37, 99, 235, 0.15);
 }
 
-/* ── 설정 패널 (드롭다운) ── */
+/* ── 설정 패널 ── */
 #settings-panel {
-  position: absolute;
-  top: 42px;
-  right: 14px;
-  min-width: 210px;
-  background: rgba(8, 10, 18, 0.97);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 10px;
+  display: none;
+  width: 100%;
+  background: rgba(8, 10, 18, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
   padding: 12px 14px;
-  z-index: 15;
-  transform-origin: top right;
-  transition: opacity 140ms ease, transform 140ms ease;
 }
 
-#settings-panel.hidden {
-  opacity: 0;
-  transform: scale(0.94) translateY(-4px);
-  pointer-events: none;
+#app.settings-mode #settings-panel {
+  display: block;
+}
+
+#app.settings-mode #timeline-container,
+#app.settings-mode #skill-log-panel,
+#app.settings-mode #status-bar,
+#app.settings-mode #log-picker {
+  display: none;
+}
+
+#app.hide-skill-log #skill-log-panel {
+  display: none;
+}
+
+#app.settings-mode #settings-toggle {
+  width: auto;
+  min-width: 46px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+}
+
+.sp-head {
+  font-size: 0.84rem;
+  color: #e2e8f0;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
 .sp-title {
