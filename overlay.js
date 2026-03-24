@@ -498,7 +498,8 @@ function startCountdown(seconds) {
       setStatus("카운트다운 완료 — 전투 시작!", "ok");
       return;
     }
-    setStatus(`카운트다운: ${Math.ceil(remainMs / 1000)}초`, "info");
+    const remainSec = Math.max(0, remainMs / 1000);
+    setStatus(`카운트다운: ${remainSec.toFixed(2)}초`, "info");
   };
   tick();
   state.countdownTimerId = setInterval(tick, 250);
