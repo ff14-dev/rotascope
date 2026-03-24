@@ -115,8 +115,36 @@ body {
 .sp-row label {
   font-size: 0.8rem;
   color: #94a3b8;
-  width: 36px;
+  width: 52px;
   flex-shrink: 0;
+}
+
+.enc-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.enc-btn {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5f5;
+  font-size: 0.72rem;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+
+.enc-btn:hover {
+  border-color: #60a5fa;
+  color: #dbeafe;
+}
+
+.enc-btn.active {
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  background: rgba(14, 116, 144, 0.35);
 }
 
 .sp-val {
@@ -127,8 +155,8 @@ body {
   flex-shrink: 0;
 }
 
-/* ── 설정 패널 select ── */
-.sp-select {
+/* ── 설정 입력 ── */
+.sp-input {
   flex: 1;
   min-width: 0;
   background: rgba(15, 23, 42, 0.9);
@@ -137,16 +165,11 @@ body {
   color: #e2e8f0;
   font-size: 0.78rem;
   padding: 3px 6px;
-  cursor: pointer;
   outline: none;
 }
 
-.sp-select:focus {
+.sp-input:focus {
   border-color: #60a5fa;
-}
-
-.sp-select option {
-  background: #0f1726;
 }
 
 .sp-hint {
@@ -158,27 +181,6 @@ body {
 .sp-job-active {
   color: #4ade80 !important;
   font-weight: 700;
-}
-
-/* ── 슬라이더 ── */
-input[type="range"] {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(148, 163, 184, 0.2);
-  outline: none;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #60a5fa;
-  cursor: pointer;
 }
 
 /* ── 상태바 ── */

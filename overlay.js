@@ -100,7 +100,7 @@ function staticUrl(path) {
 // ── 스킬명 로드 (configs/skill_name_overrides_{job}.json) ─────────────────
 async function fetchSkillNames() {
   try {
-    const url = staticUrl(`configs/skill_name_overrides_${state.job}.json`);
+    const url = staticUrl(`/configs/skill_name_overrides_${state.job}.json`);
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return;
     const data = await res.json();
@@ -117,7 +117,7 @@ async function fetchSkillNames() {
 // ── 오버레이 설정 로드 (configs/overlay_settings.json) ───────────────────
 async function fetchOverlaySettings() {
   try {
-    const url = staticUrl("configs/overlay_settings.json");
+    const url = staticUrl("/configs/overlay_settings.json");
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return;
     const data = await res.json();
@@ -129,7 +129,7 @@ async function fetchOverlaySettings() {
 // ── 타임라인 로드 (data/rotations/{job}/{encounter}.json) ─────────────────
 async function fetchTimeline() {
   const enc = state.encounter.toLowerCase();
-  const url = staticUrl(`data/rotations/${state.job}/${enc}.json`);
+  const url = staticUrl(`/data/rotations/${state.job}/${enc}.json`);
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
@@ -615,20 +615,25 @@ function applyNodeSize(w, h) {
 }
 
 function initSettings() {
-  // ── 보스 선택 드롭다운 ──────────────────────────────────────────────────
-  const encounterSelect = document.getElementById("ctrl-encounter");
-  Object.entries(ENCOUNTER_LABELS).forEach(([key, label]) => {
-    const opt = document.createElement("option");
-    opt.value = key.toLowerCase();
-    opt.textContent = label;
-    encounterSelect.appendChild(opt);
+  // ── 층 버튼 선택 ─────────────────────────────────────────────────────────
+  const encounterButtons = Array.from(document.querySelectorAll(".enc-btn"));
+  const syncEncounterButtons = () => {
+    encounterButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.encounter === state.encounter);
+    });
+  };
+  encounterButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = String(btn.dataset.encounter || "").toLowerCase();
+      if (!next || next === state.encounter) return;
+      state.encounter = next;
+      localStorage.setItem("rs_encounter", state.encounter);
+      syncEncounterButtons();
+      fetchTimeline();
+      setStatus(`층 변경 적용: ${next.toUpperCase()}`, "info");
+    });
   });
-  encounterSelect.value = state.encounter;
-  encounterSelect.addEventListener("change", () => {
-    state.encounter = encounterSelect.value;
-    localStorage.setItem("rs_encounter", state.encounter);
-    fetchTimeline();
-  });
+  syncEncounterButtons();
 
   // ── 직업 표시 초기화 ────────────────────────────────────────────────────
   if (els.detectedJob) {
@@ -642,39 +647,50 @@ function initSettings() {
     nodeH:   parseInt(localStorage.getItem("rs_node_h")   ?? "48",  10),
   };
 
-  const opacityInput = document.getElementById("ctrl-opacity");
-  const opacityVal   = document.getElementById("ctrl-opacity-val");
-  const nodeWInput   = document.getElementById("ctrl-node-w");
-  const nodeWVal     = document.getElementById("ctrl-node-w-val");
-  const nodeHInput   = document.getElementById("ctrl-node-h");
-  const nodeHVal     = document.getElementById("ctrl-node-h-val");
+  const opacityInput = document.getElementById("ctrl-opacity-num");
+  const nodeWInput   = document.getElementById("ctrl-node-w-num");
+  const nodeHInput   = document.getElementById("ctrl-node-h-num");
 
   applyOpacity(saved.opacity);
   applyNodeSize(saved.nodeW, saved.nodeH);
-  opacityInput.value     = saved.opacity;
-  opacityVal.textContent = Math.round(saved.opacity * 100) + "%";
-  nodeWInput.value       = saved.nodeW;
-  nodeWVal.textContent   = saved.nodeW;
-  nodeHInput.value       = saved.nodeH;
-  nodeHVal.textContent   = saved.nodeH;
+  opacityInput.value = Math.round(saved.opacity * 100);
+  nodeWInput.value = saved.nodeW;
+  nodeHInput.value = saved.nodeH;
 
-  opacityInput.addEventListener("input", () => {
-    const v = parseFloat(opacityInput.value);
+  const applyOpacityInput = () => {
+    const v = Math.min(100, Math.max(10, Number(opacityInput.value) || 65)) / 100;
     applyOpacity(v);
-    opacityVal.textContent = Math.round(v * 100) + "%";
-    localStorage.setItem("rs_opacity", v);
+    localStorage.setItem("rs_opacity", v.toFixed(2));
+    opacityInput.value = Math.round(v * 100);
+    setStatus(`투명도 적용: ${Math.round(v * 100)}%`, "info");
+  };
+
+  const applyNodeWInput = () => {
+    const w = Math.min(140, Math.max(52, Number(nodeWInput.value) || 72));
+    const h = Math.min(80, Math.max(28, Number(nodeHInput.value) || 48));
+    applyNodeSize(w, h);
+    localStorage.setItem("rs_node_w", String(Math.round(w)));
+    nodeWInput.value = Math.round(w);
+    setStatus(`X 적용: ${Math.round(w)}`, "info");
+  };
+
+  const applyNodeHInput = () => {
+    const w = Math.min(140, Math.max(52, Number(nodeWInput.value) || 72));
+    const h = Math.min(80, Math.max(28, Number(nodeHInput.value) || 48));
+    applyNodeSize(w, h);
+    localStorage.setItem("rs_node_h", String(Math.round(h)));
+    nodeHInput.value = Math.round(h);
+    setStatus(`Y 적용: ${Math.round(h)}`, "info");
+  };
+
+  opacityInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyOpacityInput();
   });
-  nodeWInput.addEventListener("input", () => {
-    const w = parseInt(nodeWInput.value, 10);
-    applyNodeSize(w, parseInt(nodeHInput.value, 10));
-    nodeWVal.textContent = w;
-    localStorage.setItem("rs_node_w", w);
+  nodeWInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyNodeWInput();
   });
-  nodeHInput.addEventListener("input", () => {
-    const h = parseInt(nodeHInput.value, 10);
-    applyNodeSize(parseInt(nodeWInput.value, 10), h);
-    nodeHVal.textContent = h;
-    localStorage.setItem("rs_node_h", h);
+  nodeHInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyNodeHInput();
   });
 
   els.settingsToggle.addEventListener("click", () => {
