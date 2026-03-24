@@ -275,7 +275,8 @@ body {
 
 /* ── 타임라인 ── */
 #timeline-container {
-  overflow: hidden;
+  overflow: visible;
+  padding-top: 6px;
   padding-bottom: 8px;
 }
 
