@@ -376,9 +376,6 @@ function renderSkillLog() {
       ph.textContent = ability.slice(0, 2);
       entry.appendChild(ph);
     }
-    const label = document.createElement("span");
-    label.textContent = ability;
-    entry.appendChild(label);
     els.skillLog.appendChild(entry);
   });
   els.skillLog.scrollLeft = els.skillLog.scrollWidth;
@@ -581,13 +578,8 @@ async function applyDetectedJob(abbr) {
   if (lower === state.job) return;
   state.job = lower;
   localStorage.setItem("rs_job", lower);
-  if (els.detectedJob) {
-    els.detectedJob.textContent = lower.toUpperCase();
-    els.detectedJob.classList.add("sp-job-active");
-  }
-  resetCombatState(`직업 변경: ${lower.toUpperCase()} — 스킬 데이터 로드 중...`);
-  await fetchSkillNames();
-  fetchTimeline();
+  // 직업 변경 시 전체 상태를 확실히 갱신하기 위해 자동 새로고침
+  window.location.reload();
 }
 
 // addOverlayListener("onPlayerChangedEvent") 콜백 — e.detail.job
