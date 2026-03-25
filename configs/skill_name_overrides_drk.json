@@ -17,7 +17,7 @@
   "Shadowbringer": "칠흑 도래",
   "Delirium": "피의 열광",
   "Blood Weapon": "피의 칼날",
-  "Plunge": "그림자 걸음",
+  "Shadowstride": "그림자 걸음",
   "Rampart": "철벽 방어",
   "Shadow Wall": "그림자 장벽",
   "Dark Mind": "어두운 감정",
@@ -31,5 +31,13 @@
   "Low Blow": "비열한 기습",
   "Interject": "말참견",
   "Arm's Length": "거리 유지",
-  "Sprint": "전력 질주"
+  "Sprint": "전력 질주",
+  "Comeuppance": "업보",
+  "Disesteem": "경멸",
+  "Grit": "불굴의 투지",
+  "Impalement": "관통형",
+  "Release Grit": "불굴의 투지 해제",
+  "Scarlet Delirium": "붉은 열광",
+  "Shadowed Vigil": "그림자 요새",
+  "Torcleaver": "도륙검"
 }
