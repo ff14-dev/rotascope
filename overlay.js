@@ -7,6 +7,8 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
+const APP_VERSION = "0.0.2";
+
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
 const FFXIV_JOB_BY_ID = {
@@ -85,6 +87,7 @@ const els = {
   skillLog:       document.getElementById("skill-log"),
   settingsToggle: document.getElementById("settings-toggle"),
   settingsView:   document.getElementById("settings-view"),
+  versionText:    document.getElementById("version-text"),
 };
 
 // ── URL 파라미터 ──────────────────────────────────────────────────────────
@@ -701,6 +704,8 @@ function applyNodeSize(w, h) {
 }
 
 function initSettings() {
+  if (els.versionText) els.versionText.textContent = `v${APP_VERSION}`;
+
   const setSettingsMode = (enabled) => {
     if (!els.app || !els.settingsToggle) return;
     els.app.classList.toggle("settings-mode", enabled);

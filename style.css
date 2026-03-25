@@ -125,6 +125,13 @@ body {
   margin-bottom: 10px;
 }
 
+.sp-version {
+  margin-top: 8px;
+  text-align: right;
+  font-size: 0.62rem;
+  color: #64748b;
+}
+
 .sp-title {
   font-size: 0.92rem;
   font-weight: 600;
