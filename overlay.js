@@ -16,6 +16,13 @@ const FFXIV_JOB_BY_ID = {
   37:"gnb", 38:"dnc", 39:"rpr", 40:"sge", 41:"vpr", 42:"pct",
 };
 
+const FFXIV_JOB_BY_3 = {
+  PLD:"pld", MNK:"mnk", WAR:"war", DRG:"drg", BRD:"brd",
+  WHM:"whm", BLM:"blm", SMN:"smn", SCH:"sch", NIN:"nin",
+  MCH:"mch", DRK:"drk", AST:"ast", SAM:"sam", RDM:"rdm",
+  GNB:"gnb", DNC:"dnc", RPR:"rpr", SGE:"sge", VPR:"vpr", PCT:"pct",
+};
+
 const state = {
   encounter: "m9s",
   job: "sam",
@@ -569,7 +576,15 @@ function normalizeJobAbbr(abbr) {
     const mapped = FFXIV_JOB_BY_ID[Number(raw)];
     if (mapped) return mapped;
   }
-  return raw.toLowerCase();
+  const upper = raw.toUpperCase();
+  if (FFXIV_JOB_BY_3[upper]) return FFXIV_JOB_BY_3[upper];
+  const alphaOnly = upper.replace(/[^A-Z]/g, "");
+  if (alphaOnly.length >= 3 && FFXIV_JOB_BY_3[alphaOnly.slice(0, 3)]) {
+    return FFXIV_JOB_BY_3[alphaOnly.slice(0, 3)];
+  }
+  const lower = raw.toLowerCase();
+  if (Object.values(FFXIV_JOB_BY_3).includes(lower)) return lower;
+  return null;
 }
 
 async function applyDetectedJob(abbr) {
@@ -585,7 +600,11 @@ async function applyDetectedJob(abbr) {
 // addOverlayListener("onPlayerChangedEvent") 콜백 — e.detail.job
 function onPlayerChangedEvent(e) {
   if (e?.detail?.name) state.playerName = String(e.detail.name);
-  const job = e?.detail?.job;
+  const detail = e?.detail || {};
+  const job =
+    detail.job ?? detail.Job ??
+    detail.class ?? detail.Class ??
+    e?.job ?? e?.Job ?? null;
   if (job) applyDetectedJob(job);
 }
 
