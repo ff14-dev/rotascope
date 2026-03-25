@@ -423,8 +423,13 @@ body {
   align-items: flex-start;
   min-height: 64px;
   padding-top: 3px;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: visible;
+  scrollbar-width: none;
+}
+
+#skill-log::-webkit-scrollbar {
+  display: none;
 }
 
 .skill-entry {
