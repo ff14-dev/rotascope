@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.2";
+const APP_VERSION = "0.0.3";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -55,6 +55,7 @@ const state = {
   skillLogMax: 8,
   showSkillLog: true,
   overlayWs: null,
+  playerPollTimerId: null,
 };
 
 // ── 이벤트 중복 제거 ──────────────────────────────────────────────────────
@@ -628,6 +629,13 @@ function queryCurrentPlayer() {
     .catch(() => {});
 }
 
+function startPlayerPolling() {
+  if (state.playerPollTimerId || !window.callOverlayHandler) return;
+  state.playerPollTimerId = setInterval(() => {
+    queryCurrentPlayer();
+  }, 2000);
+}
+
 // ── 로컬 서버 WebSocket 폴백 ──────────────────────────────────────────────
 function connectLocalActLogStream() {
   // ?base= 없이 http://로 직접 로드된 경우 현재 오리진을 사용
@@ -673,6 +681,7 @@ function setupOverlayPlugin() {
   // 로컬 서버: WS 로그 파일 스트리밍 사용
   if (isLocalServer()) {
     connectLocalActLogStream();
+    startPlayerPolling();
     return;
   }
 
@@ -691,6 +700,8 @@ function setupOverlayPlugin() {
 
   // 이미 인게임 상태일 경우 직업 즉시 조회
   queryCurrentPlayer();
+  // ZeffUI 패턴처럼 getCombatants 보강 폴링으로 직업 변경 누락 방지
+  startPlayerPolling();
 }
 
 // ── 설정 패널 (투명도 / X·Y 크기) ────────────────────────────────────────
