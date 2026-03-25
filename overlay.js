@@ -43,7 +43,7 @@ const state = {
   rotationCandidates: [],
   selectedRotationIndex: 0,
   timelineSlots: 7,
-  skillLogMax: 200,
+  skillLogMax: 8,
   showSkillLog: true,
   overlayWs: null,
 };
