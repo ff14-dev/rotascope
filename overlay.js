@@ -34,6 +34,7 @@ const state = {
   countdownTargetTs: null,
   lastCountdownSignalAt: 0,
   lastCountdownSeconds: null,
+  playerName: "",
   skillLog: [],
   skillNameMap: {},
   skillNameReverseMap: {},
@@ -42,7 +43,7 @@ const state = {
   rotationCandidates: [],
   selectedRotationIndex: 0,
   timelineSlots: 7,
-  skillLogMax: 20,
+  skillLogMax: 200,
   showSkillLog: true,
   overlayWs: null,
 };
@@ -198,6 +199,7 @@ function applySelectedRotation(resetCombat = true) {
   state.selectedRotationIndex = idx;
   const target = state.rotationCandidates[idx];
   state.timeline = (target.timeline || []).filter((e) => !shouldIgnoreAbility(e?.ability));
+  if (!state.playerName && target.player) state.playerName = String(target.player);
   if (els.player) {
     els.player.textContent = `${target.player || "Unknown"} · ${target.report_id} · fight ${target.fight_id}`;
   }
@@ -254,6 +256,10 @@ function shouldIgnoreAbility(name) {
   const localized = state.skillNameMap[name];
   if (localized && state.ignoredAbilitiesNormalized.has(normalizeAbilityName(localized))) return true;
   return false;
+}
+
+function normalizePlayerName(name) {
+  return String(name || "").toLowerCase().replace(/@.*$/, "").trim();
 }
 
 // ── 타임라인 렌더링 ───────────────────────────────────────────────────────
@@ -375,11 +381,19 @@ function renderSkillLog() {
     entry.appendChild(label);
     els.skillLog.appendChild(entry);
   });
+  els.skillLog.scrollLeft = els.skillLog.scrollWidth;
 }
 
 const AUTO_ATTACK_NAMES = new Set(["Attack", "Shot", "공격"]);
 
 function handleAbility(logLine) {
+  const sourceName = String(logLine[3] || "");
+  if (
+    state.playerName &&
+    sourceName &&
+    normalizePlayerName(sourceName) !== normalizePlayerName(state.playerName)
+  ) return;
+
   const rawAbilityName = logLine[5];
   if (!rawAbilityName || AUTO_ATTACK_NAMES.has(rawAbilityName) || shouldIgnoreAbility(rawAbilityName)) return;
   const abilityName = localizedName(rawAbilityName);
@@ -578,6 +592,7 @@ async function applyDetectedJob(abbr) {
 
 // addOverlayListener("onPlayerChangedEvent") 콜백 — e.detail.job
 function onPlayerChangedEvent(e) {
+  if (e?.detail?.name) state.playerName = String(e.detail.name);
   const job = e?.detail?.job;
   if (job) applyDetectedJob(job);
 }
@@ -586,6 +601,7 @@ function onPlayerChangedEvent(e) {
 function getPlayerFromCombatants(data) {
   if (!data?.combatants?.length) return;
   const player = data.combatants[0];
+  if (player?.Name) state.playerName = String(player.Name);
   if (player?.Job) applyDetectedJob(player.Job);
 }
 
