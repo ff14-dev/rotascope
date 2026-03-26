@@ -54,6 +54,7 @@ const state = {
   timelineSlots: 7,
   skillLogMax: 8,
   showSkillLog: true,
+  hidePotion: false,
   overlayWs: null,
   playerPollTimerId: null,
 };
@@ -262,6 +263,7 @@ function abilityMatches(left, right) {
 }
 
 function shouldIgnoreAbility(name) {
+  if (state.hidePotion && isPotionAlias(name)) return true;
   if (state.ignoredAbilitiesNormalized.has(normalizeAbilityName(name))) return true;
   // 영문명 → 한글명 변환 후에도 체크 (타임라인은 영문, 무시목록은 한글일 수 있음)
   const localized = state.skillNameMap[name];
@@ -812,6 +814,26 @@ function initSettings() {
       applySkillLogVisibility(visible);
       syncSkillLogVisButtons();
       setStatus(visible ? "아래 로그 표시" : "아래 로그 숨김", "info");
+    });
+  });
+
+  const potionButtons = Array.from(document.querySelectorAll("[data-hide-potion]"));
+  const syncPotionButtons = () => {
+    potionButtons.forEach((btn) => {
+      btn.classList.toggle("active", (btn.dataset.hidePotion === "1") === state.hidePotion);
+    });
+  };
+  state.hidePotion = localStorage.getItem("rs_hide_potion") === "1";
+  syncPotionButtons();
+  potionButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const hidePotion = btn.dataset.hidePotion === "1";
+      if (hidePotion === state.hidePotion) return;
+      state.hidePotion = hidePotion;
+      localStorage.setItem("rs_hide_potion", hidePotion ? "1" : "0");
+      syncPotionButtons();
+      if (state.rotationCandidates.length > 0) applySelectedRotation(true);
+      setStatus(hidePotion ? "탕약끄기: ON" : "탕약끄기: OFF", "info");
     });
   });
 
