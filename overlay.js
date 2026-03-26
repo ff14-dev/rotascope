@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.4";
+const APP_VERSION = "0.0.5";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -57,6 +57,7 @@ const state = {
   hidePotion: false,
   overlayWs: null,
   playerPollTimerId: null,
+  inCombat: false,
 };
 
 // ── 이벤트 중복 제거 ──────────────────────────────────────────────────────
@@ -344,7 +345,11 @@ function setStatus(message, type = "info") {
 // ── 전투 이벤트 ───────────────────────────────────────────────────────────
 function handleCombatStart(ts) {
   stopCountdown(false);
-  if (state.startTs) return;
+  if (state.startTs) {
+    state.inCombat = true;
+    return;
+  }
+  state.inCombat = true;
   state.startTs = ts;
   state.lastAbilityTs = 0;
   // 카운트 중 선입력으로 전진한 인덱스는 유지 (리셋 안 함)
@@ -354,6 +359,7 @@ function handleCombatStart(ts) {
 
 function resetCombatState(statusMsg = "초읽기를 기다립니다.") {
   stopCountdown(false);
+  state.inCombat = false;
   state.startTs = null;
   state.expectedIndex = 0;
   state.currentTimelineIndex = 0;
@@ -364,8 +370,8 @@ function resetCombatState(statusMsg = "초읽기를 기다립니다.") {
 }
 
 function handleCombatEnd() {
-  resetCombatState("전투 종료 — 타임라인 초기화 중...");
-  fetchTimeline();
+  if (!state.startTs && !state.inCombat) return;
+  resetCombatState("전투 종료 — 초읽기를 기다립니다.");
 }
 
 function findSkillIcon(abilityName) {
@@ -537,7 +543,6 @@ function handleOverlayEvent(event) {
   switch (type) {
     case 21: case 22: handleAbility(line); break;
     case 26: if (!state.countdownTargetTs) handleCombatStart(Date.now()); break;
-    case 33: handleCombatEnd(); break;
   }
 }
 
@@ -553,6 +558,14 @@ function handleLegacyLogEvent(event) {
 
 function dispatchOverlayPayload(payload) {
   if (!payload) return;
+  if (payload.type === "onInCombatChangedEvent") {
+    onInCombatChangedEvent(payload);
+    return;
+  }
+  if (payload.type === "onPlayerChangedEvent") {
+    onPlayerChangedEvent(payload);
+    return;
+  }
   if (payload.type === "onLogEvent" || payload.logs || payload?.detail?.logs) {
     handleLegacyLogEvent(payload); return;
   }
@@ -566,6 +579,33 @@ function dispatchOverlayPayload(payload) {
     const line = Array.isArray(payload.line) ? payload.line : [];
     if (line.length >= 3 && isDuplicateEvent(line)) return;
     handleOverlayEvent(payload);
+  }
+}
+
+function readInCombatFlag(payload) {
+  const candidates = [
+    payload?.detail?.inGameCombat,
+    payload?.detail?.inCombat,
+    payload?.inGameCombat,
+    payload?.inCombat,
+  ];
+  for (const v of candidates) {
+    if (typeof v === "boolean") return v;
+    if (v === 1 || v === "1" || v === "true") return true;
+    if (v === 0 || v === "0" || v === "false") return false;
+  }
+  return null;
+}
+
+function onInCombatChangedEvent(e) {
+  const nextInCombat = readInCombatFlag(e);
+  if (nextInCombat === null) return;
+  if (nextInCombat === state.inCombat) return;
+  state.inCombat = nextInCombat;
+  if (nextInCombat) {
+    handleCombatStart(Date.now());
+  } else {
+    handleCombatEnd();
   }
 }
 
@@ -696,6 +736,7 @@ function setupOverlayPlugin() {
   addOverlayListener("LogLine",              handleOverlayEvent);
   addOverlayListener("onLogEvent",           handleLegacyLogEvent);
   addOverlayListener("onPlayerChangedEvent", onPlayerChangedEvent);
+  addOverlayListener("onInCombatChangedEvent", onInCombatChangedEvent);
 
   startOverlayEvents();
   setStatus("OverlayPlugin 연결 완료 — 전투 시작 신호를 기다립니다.", "ok");
