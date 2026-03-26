@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.5";
+const APP_VERSION = "0.0.6";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -58,6 +58,7 @@ const state = {
   overlayWs: null,
   playerPollTimerId: null,
   inCombat: false,
+  combatStartedAt: 0,
 };
 
 // ── 이벤트 중복 제거 ──────────────────────────────────────────────────────
@@ -351,6 +352,7 @@ function handleCombatStart(ts) {
   }
   state.inCombat = true;
   state.startTs = ts;
+  state.combatStartedAt = Date.now();
   state.lastAbilityTs = 0;
   // 카운트 중 선입력으로 전진한 인덱스는 유지 (리셋 안 함)
   renderTimelineWindow();
@@ -361,6 +363,7 @@ function resetCombatState(statusMsg = "초읽기를 기다립니다.") {
   stopCountdown(false);
   state.inCombat = false;
   state.startTs = null;
+  state.combatStartedAt = 0;
   state.expectedIndex = 0;
   state.currentTimelineIndex = 0;
   state.skillLog = [];
@@ -542,7 +545,12 @@ function handleOverlayEvent(event) {
 
   switch (type) {
     case 21: case 22: handleAbility(line); break;
-    case 26: if (!state.countdownTargetTs) handleCombatStart(Date.now()); break;
+    // type 33 종료 로그를 보조 신호로 사용 (onInCombatChangedEvent 누락 대비)
+    case 33:
+      if (state.startTs && !state.countdownTargetTs && (Date.now() - (state.combatStartedAt || 0) > 1500)) {
+        handleCombatEnd();
+      }
+      break;
   }
 }
 
@@ -600,6 +608,7 @@ function readInCombatFlag(payload) {
 function onInCombatChangedEvent(e) {
   const nextInCombat = readInCombatFlag(e);
   if (nextInCombat === null) return;
+  if (!nextInCombat && state.countdownTargetTs) return;
   if (nextInCombat === state.inCombat) return;
   state.inCombat = nextInCombat;
   if (nextInCombat) {
