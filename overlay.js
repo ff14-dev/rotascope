@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.7";
+const APP_VERSION = "0.0.8";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -421,6 +421,11 @@ function handleAbility(logLine) {
 
   const expectedEntry = state.timeline[state.expectedIndex] || null;
 
+  // inCombat 이벤트 누락 환경에서는 첫 스킬을 전투 시작 신호로 사용
+  if (!state.startTs && !state.inCombat && !state.countdownTargetTs) {
+    handleCombatStart(Date.now());
+  }
+
   // 전투 시작 전(카운트다운 중): 첫 번째 예상 스킬과 일치할 때만 타임라인 전진, 나머지는 무시
   if (!state.startTs) {
     if (expectedEntry && abilityMatches(expectedEntry.ability, abilityName)) {
@@ -534,10 +539,12 @@ function handleOverlayEvent(event) {
 
   const countdownSeconds = detectCountdownSeconds(event, line);
   if (countdownSeconds !== null) {
-    handleAutoCountdown(countdownSeconds);
+    if (!state.inCombat && !state.startTs) handleAutoCountdown(countdownSeconds);
   } else if (isCountdownCancelled(event, line)) {
-    stopCountdown(false);
-    setStatus("ACT 초읽기 취소 감지.", "warn");
+    if (!state.inCombat && !state.startTs) {
+      stopCountdown(false);
+      setStatus("ACT 초읽기 취소 감지.", "warn");
+    }
   }
 
   switch (type) {
@@ -599,7 +606,7 @@ function readInCombatFlag(payload) {
 function onInCombatChangedEvent(e) {
   const nextInCombat = readInCombatFlag(e);
   if (nextInCombat === null) return;
-  if (!nextInCombat && state.countdownTargetTs) return;
+  if (!nextInCombat && state.countdownTargetTs && !state.startTs) return;
   if (nextInCombat === state.inCombat) return;
   state.inCombat = nextInCombat;
   if (nextInCombat) {
