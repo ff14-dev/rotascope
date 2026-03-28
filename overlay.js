@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.8";
+const APP_VERSION = "0.0.9";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -629,6 +629,11 @@ function normalizeJobAbbr(abbr) {
     const mapped = FFXIV_JOB_BY_ID[Number(raw)];
     if (mapped) return mapped;
   }
+  const hexRaw = raw.replace(/^0x/i, "");
+  if (/^[0-9a-f]+$/i.test(hexRaw) && /[a-f]/i.test(hexRaw)) {
+    const mappedHex = FFXIV_JOB_BY_ID[parseInt(hexRaw, 16)];
+    if (mappedHex) return mappedHex;
+  }
   const upper = raw.toUpperCase();
   if (FFXIV_JOB_BY_3[upper]) return FFXIV_JOB_BY_3[upper];
   const alphaOnly = upper.replace(/[^A-Z]/g, "");
@@ -664,9 +669,20 @@ function onPlayerChangedEvent(e) {
 // getCombatants 결과에서 플레이어 직업 추출 — combatants[0].Job
 function getPlayerFromCombatants(data) {
   if (!data?.combatants?.length) return;
-  const player = data.combatants[0];
+  const list = data.combatants.filter(Boolean);
+  const normalizedSelf = normalizePlayerName(state.playerName);
+  let player = null;
+  if (normalizedSelf) {
+    player = list.find((c) => normalizePlayerName(c?.Name) === normalizedSelf) || null;
+  }
+  if (!player) {
+    player = list.find((c) => c?.Job !== undefined || c?.job !== undefined || c?.ClassJob !== undefined) || list[0];
+  }
   if (player?.Name) state.playerName = String(player.Name);
-  if (player?.Job) applyDetectedJob(player.Job);
+  const job =
+    player?.Job ?? player?.job ??
+    player?.ClassJob ?? player?.classJob ?? null;
+  if (job !== null && job !== undefined) applyDetectedJob(job);
 }
 
 // 오버레이 로드 시 이미 인게임이면 onPlayerChangedEvent가 오지 않으므로
