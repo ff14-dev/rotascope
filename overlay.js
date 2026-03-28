@@ -7,7 +7,7 @@ const ENCOUNTER_LABELS = {
   "M12S-P2":"M12S — Lindwurm II (Phase 2)",
 };
 
-const APP_VERSION = "0.0.9";
+const APP_VERSION = "0.0.10";
 
 // ── FFXIV 직업 ID → 약어 ──────────────────────────────────────────────────
 // onPlayerChangedEvent.detail.job 이 숫자일 때 사용
@@ -645,12 +645,18 @@ function normalizeJobAbbr(abbr) {
   return null;
 }
 
-async function applyDetectedJob(abbr) {
+async function applyDetectedJob(abbr, options = {}) {
   const lower = normalizeJobAbbr(abbr);
   if (!lower) return;
   if (lower === state.job) return;
+  const shouldReload = options.reload !== false;
   state.job = lower;
   localStorage.setItem("rs_job", lower);
+  if (els.detectedJob) {
+    els.detectedJob.textContent = state.job.toUpperCase();
+    els.detectedJob.classList.toggle("sp-job-active", true);
+  }
+  if (!shouldReload) return;
   // 직업 변경 시 전체 상태를 확실히 갱신하기 위해 자동 새로고침
   window.location.reload();
 }
@@ -667,7 +673,7 @@ function onPlayerChangedEvent(e) {
 }
 
 // getCombatants 결과에서 플레이어 직업 추출 — combatants[0].Job
-function getPlayerFromCombatants(data) {
+function getPlayerFromCombatants(data, options = {}) {
   if (!data?.combatants?.length) return;
   const list = data.combatants.filter(Boolean);
   const normalizedSelf = normalizePlayerName(state.playerName);
@@ -682,7 +688,7 @@ function getPlayerFromCombatants(data) {
   const job =
     player?.Job ?? player?.job ??
     player?.ClassJob ?? player?.classJob ?? null;
-  if (job !== null && job !== undefined) applyDetectedJob(job);
+  if (job !== null && job !== undefined) applyDetectedJob(job, options);
 }
 
 // 오버레이 로드 시 이미 인게임이면 onPlayerChangedEvent가 오지 않으므로
@@ -690,8 +696,16 @@ function getPlayerFromCombatants(data) {
 function queryCurrentPlayer() {
   if (!window.callOverlayHandler) return;
   callOverlayHandler({ call: "getCombatants" })
-    .then(getPlayerFromCombatants)
+    .then((data) => getPlayerFromCombatants(data))
     .catch(() => {});
+}
+
+async function primeInitialJob() {
+  if (!window.callOverlayHandler) return;
+  try {
+    const data = await callOverlayHandler({ call: "getCombatants" });
+    getPlayerFromCombatants(data, { reload: false });
+  } catch {}
 }
 
 function startPlayerPolling() {
@@ -764,8 +778,8 @@ function setupOverlayPlugin() {
   startOverlayEvents();
   setStatus("OverlayPlugin 연결 완료 — 전투 시작 신호를 기다립니다.", "ok");
 
-  // 이미 인게임 상태일 경우 직업 즉시 조회
-  queryCurrentPlayer();
+  // 이미 인게임 상태일 경우 직업 즉시 조회 (초기 로드는 새로고침 없이 반영)
+  primeInitialJob();
   // ZeffUI 패턴처럼 getCombatants 보강 폴링으로 직업 변경 누락 방지
   startPlayerPolling();
 }
@@ -1006,11 +1020,13 @@ function initSettings() {
 }
 
 // ── 진입점 ────────────────────────────────────────────────────────────────
-function main() {
+async function main() {
   parseParams();
   initSettings();
-  Promise.all([fetchSkillNames(), fetchOverlaySettings()]).finally(fetchTimeline);
   setupOverlayPlugin();
+  await primeInitialJob();
+  await Promise.all([fetchSkillNames(), fetchOverlaySettings()]);
+  await fetchTimeline();
 }
 
 document.addEventListener("DOMContentLoaded", main);
